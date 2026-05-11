@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.quasar/
+.vite/
+coverage/
+.env*.local
+*.log
+.DS_Store
+*.swp
+.idea/
+.vscode/
