@@ -4,8 +4,7 @@
 import { defineConfig } from '#q-app/wrappers'
 
 export default defineConfig(() => ({
-  // boot files registered in T2 — see src/boot/vue-flow.js
-  boot: [],
+  boot: ['vue-flow'],
 
   css: ['app.scss'],
 
