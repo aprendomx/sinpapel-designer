@@ -4,7 +4,7 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', name: 'home', component: () => import('pages/IndexPage.vue') },
-      // S27.4 T2 adds /workflow/:id route
+      { path: 'workflow/:id', name: 'workflow-canvas', component: () => import('pages/WorkflowCanvasPage.vue') },
       // S27.4 T3 adds /workflows route
     ],
   },
