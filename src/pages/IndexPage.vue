@@ -1,61 +1,106 @@
 <template>
-  <q-page class="q-pa-md smoke-page">
-    <h1 class="text-h5 q-mb-md">Sinpapel Designer — Smoke Test</h1>
-
-    <p class="text-body2 q-mb-sm">
-      Stack: Vue 3 + Quasar 2 + Vue Flow loaded.
-    </p>
-
-    <p class="text-caption text-grey q-mb-md">
-      S27.1 T2 — valida coexistencia Vue Flow + Quasar. Branding visual diferido a S27.4.
-    </p>
-
-    <div data-testid="smoke-btn-wrap" class="q-mb-md">
-      <q-btn label="Quasar OK" color="primary" icon="check" />
+  <q-page class="home-page">
+    <div class="home-page__header">
+      <h1 class="home-page__title">Sinpapel Designer</h1>
+      <p class="home-page__subtitle">Configura workflows del framework sinpapel</p>
     </div>
 
-    <div
-      data-testid="smoke-canvas-wrap"
-      class="smoke-canvas-wrap"
-      style="height: 360px; border: 1px solid #ddd; border-radius: 6px;"
-    >
-      <VueFlow
-        :nodes="nodes"
-        :edges="edges"
-        :default-viewport="{ x: 0, y: 0, zoom: 1 }"
-        fit-view-on-init
+    <div class="home-page__cards">
+      <q-card
+        class="home-page__card"
+        clickable
+        v-ripple
+        @click="router.push({ name: 'workflows' })"
       >
-        <Background pattern-color="#aaa" :gap="20" />
-        <Controls />
-        <MiniMap />
-      </VueFlow>
+        <q-card-section class="home-page__card-body">
+          <q-icon name="account_tree" size="48px" class="home-page__icon" />
+          <div class="home-page__card-title">Workflows</div>
+          <div class="home-page__card-desc">
+            Define flujos de aprobación, estados y transiciones
+          </div>
+        </q-card-section>
+      </q-card>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { VueFlow } from '@vue-flow/core'
-import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
-import { MiniMap } from '@vue-flow/minimap'
+import { useRouter } from 'vue-router'
 
-const nodes = ref([
-  { id: '1', type: 'default', position: { x: 50, y: 50 }, data: { label: 'Estado A' } },
-  { id: '2', type: 'default', position: { x: 300, y: 200 }, data: { label: 'Estado B' } },
-])
-
-const edges = ref([
-  { id: 'e1-2', source: '1', target: '2', label: 'transición demo' },
-])
+const router = useRouter()
 </script>
 
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@400;700&display=swap');
+</style>
+
 <style scoped>
-.smoke-page {
-  max-width: 900px;
+.home-page {
+  padding: 40px 32px;
+  background: #f7f3ef;
+  min-height: 100vh;
+  font-family: 'Cabin', sans-serif;
 }
 
-.smoke-canvas-wrap {
-  background: #fafafa;
+.home-page__header {
+  margin-bottom: 40px;
+}
+
+.home-page__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #9b2247;
+  margin: 0 0 6px;
+}
+
+.home-page__subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.home-page__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 680px;
+}
+
+.home-page__card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8e0d8;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.home-page__card:hover {
+  box-shadow: 0 8px 24px rgba(155, 34, 71, 0.12);
+  transform: translateY(-2px);
+}
+
+.home-page__card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 24px 28px;
+  gap: 12px;
+}
+
+.home-page__icon {
+  color: #a57f2c;
+}
+
+.home-page__card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #9b2247;
+}
+
+.home-page__card-desc {
+  font-size: 13px;
+  color: #777;
+  line-height: 1.5;
 }
 </style>
