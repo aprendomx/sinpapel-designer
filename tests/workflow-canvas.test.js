@@ -1,8 +1,5 @@
-// S27.4 T2 — smoke mount test for WorkflowCanvasPage.
-// Mocks @vue-flow/core (useVueFlow + VueFlow component) y vue-router
-// (useRoute/useRouter) porque la composition API usa injection.
-// Stub fixture mockeado para tests deterministicos.
-// Real Vue Flow rendering validado via browser smoke (npm run dev).
+// S27.5 T3 — smoke mount test for WorkflowCanvasPage post-Pinia migration.
+// vi.mock 'src/stores/workflow.js' replaces S27.4 stub-fixture mock.
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -24,8 +21,10 @@ vi.mock('@vue-flow/background', () => ({ Background: { template: '<div/>' } }))
 vi.mock('@vue-flow/controls', () => ({ Controls: { template: '<div/>' } }))
 vi.mock('@vue-flow/minimap', () => ({ MiniMap: { template: '<div/>' } }))
 
-vi.mock('src/data/stub-fixture.js', () => ({
-  stub: {
+vi.mock('src/stores/workflow.js', () => ({
+  useWorkflowStore: () => ({
+    current: null,
+    isDirty: false,
     getFlujo: vi.fn().mockResolvedValue({
       id: 1, nombre: 'Test Flujo', descripcion: '', activo: true,
       metadatos: { positions: {} },
@@ -33,13 +32,17 @@ vi.mock('src/data/stub-fixture.js', () => ({
     getFlujoTransiciones: vi.fn().mockResolvedValue([]),
     getGrupos: vi.fn().mockResolvedValue([]),
     getEstatuses: vi.fn().mockResolvedValue([]),
-  },
+    bulkReplaceTransiciones: vi.fn(),
+    saveLayout: vi.fn(),
+    exportToFile: vi.fn(),
+    discard: vi.fn(),
+  }),
 }))
 
 import WorkflowCanvasPage from '../src/pages/WorkflowCanvasPage.vue'
 
-describe('WorkflowCanvasPage smoke', () => {
-  it('mounts without errors with mocked stub data', async () => {
+describe('WorkflowCanvasPage smoke (S27.5)', () => {
+  it('mounts without errors with mocked Pinia store', async () => {
     const wrapper = mount(WorkflowCanvasPage, {
       global: {
         stubs: {

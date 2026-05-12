@@ -1,4 +1,5 @@
-// S27.4 T3 — smoke mount test for WorkflowListPage.
+// S27.5 T3 — smoke mount test for WorkflowListPage post-Pinia migration.
+// vi.mock 'src/stores/workflow.js' replaces S27.4 stub-fixture mock.
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -8,21 +9,22 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
-vi.mock('src/data/stub-fixture.js', () => ({
-  stub: {
+vi.mock('src/stores/workflow.js', () => ({
+  useWorkflowStore: () => ({
     getFlujos: vi.fn().mockResolvedValue([
-      { id: 1, nombre: 'Flujo Test', descripcion: '', activo: true, transiciones_count: 2 },
-      { id: 2, nombre: 'Flujo Alt', descripcion: '', activo: false, transiciones_count: 0 },
+      { id: '1', nombre: 'Flujo Test', descripcion: '', activo: true, transiciones_count: 2 },
+      { id: '2', nombre: 'Flujo Alt', descripcion: '', activo: false, transiciones_count: 0 },
     ]),
     createFlujo: vi.fn(),
     updateFlujo: vi.fn(),
-  },
+    loadFromFile: vi.fn(),
+  }),
 }))
 
 import WorkflowListPage from '../src/pages/WorkflowListPage.vue'
 
-describe('WorkflowListPage smoke', () => {
-  it('mounts and renders list rows with stub data', async () => {
+describe('WorkflowListPage smoke (S27.5)', () => {
+  it('mounts and renders list rows with mocked store', async () => {
     const wrapper = mount(WorkflowListPage, {
       global: {
         stubs: {

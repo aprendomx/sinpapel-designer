@@ -144,10 +144,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
-import { stub } from 'src/data/stub-fixture.js'
+import { useWorkflowStore } from 'src/stores/workflow.js'
 
 const router = useRouter()
 const $q = useQuasar()
+const store = useWorkflowStore()
 
 const flujos = ref([])
 const loading = ref(true)
@@ -163,7 +164,7 @@ const togglingId = ref(null)
 
 onMounted(async () => {
   try {
-    flujos.value = await stub.getFlujos()
+    flujos.value = await store.getFlujos()
   } catch {
     error.value = true
   } finally {
@@ -184,7 +185,7 @@ async function crearFlujo() {
   if (!nuevoFlujo.value.nombre.trim()) return
   creando.value = true
   try {
-    const flujo = await stub.createFlujo({
+    const flujo = await store.createFlujo({
       nombre: nuevoFlujo.value.nombre.trim(),
       descripcion: nuevoFlujo.value.descripcion.trim(),
     })
@@ -201,7 +202,7 @@ async function crearFlujo() {
 async function toggleActivo(flujo) {
   togglingId.value = flujo.id
   try {
-    const actualizado = await stub.updateFlujo(flujo.id, { activo: !flujo.activo })
+    const actualizado = await store.updateFlujo(flujo.id, { activo: !flujo.activo })
     const idx = flujos.value.findIndex(f => f.id === flujo.id)
     if (idx !== -1) flujos.value[idx] = { ...flujos.value[idx], activo: actualizado.activo }
   } catch {
