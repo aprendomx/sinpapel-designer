@@ -239,7 +239,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { stub } from 'src/data/stub-fixture.js'
+import { useWorkflowStore } from 'src/stores/workflow.js'
 
 // ── Page logic ───────────────────────────────────────────────────────────────
 
@@ -247,6 +247,7 @@ const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
 const { screenToFlowCoordinate } = useVueFlow()
+const store = useWorkflowStore()
 
 const flujo = ref(null)
 const nodes = ref([])
@@ -299,8 +300,8 @@ async function loadFlujo() {
   const id = route.params.id
   try {
     const [flujoData, transiciones] = await Promise.all([
-      stub.getFlujo(id),
-      stub.getFlujoTransiciones(id),
+      store.getFlujo(id),
+      store.getFlujoTransiciones(id),
     ])
     flujo.value = flujoData
 
@@ -361,8 +362,8 @@ onMounted(async () => {
   await loadFlujo()
   // Load grupos and all estatuses in parallel
   const [grupos, estatuses] = await Promise.allSettled([
-    stub.getGrupos(),
-    stub.getEstatuses(),
+    store.getGrupos(),
+    store.getEstatuses(),
   ])
   if (grupos.status === 'fulfilled') gruposOptions.value = grupos.value
   if (estatuses.status === 'fulfilled') {
@@ -496,8 +497,8 @@ async function saveChanges() {
       positions[n.id] = { x: n.position.x, y: n.position.y }
     })
 
-    await stub.bulkReplaceTransiciones(id, transiciones)
-    await stub.saveLayout(id, positions)
+    await store.bulkReplaceTransiciones(id, transiciones)
+    await store.saveLayout(id, positions)
 
     // Update snapshot after save
     snapshotNodes = JSON.parse(JSON.stringify(nodes.value))
@@ -505,9 +506,12 @@ async function saveChanges() {
     isDirty.value = false
     selectedEdge.value = null
 
+    // S27.5: trigger download del JSON v0.2 (combined save UX per D5)
+    store.exportToFile()
+
     $q.notify({
       type: 'positive',
-      message: 'Stub save (S27.5 implementará persistencia)',
+      message: 'Workflow guardado (localStorage + descargado)',
       position: 'top',
     })
   } catch {
