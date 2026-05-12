@@ -4,7 +4,7 @@
 import { defineConfig } from '#q-app/wrappers'
 
 export default defineConfig(() => ({
-  boot: ['vue-flow'],
+  boot: ['vue-flow', 'pinia'],
 
   css: ['app.scss'],
 
