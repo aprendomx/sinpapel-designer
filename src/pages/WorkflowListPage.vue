@@ -9,14 +9,31 @@
           <h1 class="wf-list__title">Flujos de Trabajo</h1>
           <p class="wf-list__subtitle">Configuración de workflows de aprobación crediticia</p>
         </div>
-        <q-btn
-          icon="add"
-          label="Nuevo flujo"
-          no-caps
-          unelevated
-          class="wf-list__new-btn"
-          @click="dialogVisible = true"
-        />
+        <div style="display: flex; gap: 8px;">
+          <q-btn
+            icon="upload_file"
+            label="Importar"
+            no-caps
+            outline
+            class="wf-list__import-btn"
+            @click="triggerFileInput"
+          />
+          <q-btn
+            icon="add"
+            label="Nuevo flujo"
+            no-caps
+            unelevated
+            class="wf-list__new-btn"
+            @click="dialogVisible = true"
+          />
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept=".json,application/json"
+            style="display: none"
+            @change="onFileSelected"
+          />
+        </div>
       </div>
     </div>
 
@@ -149,6 +166,7 @@ import { useWorkflowStore } from 'src/stores/workflow.js'
 const router = useRouter()
 const $q = useQuasar()
 const store = useWorkflowStore()
+const fileInputRef = ref(null)
 
 const flujos = ref([])
 const loading = ref(true)
@@ -209,6 +227,35 @@ async function toggleActivo(flujo) {
     $q.notify({ type: 'negative', message: 'Error al actualizar flujo', position: 'top' })
   } finally {
     togglingId.value = null
+  }
+}
+
+// S27.5 — File import UX
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+async function onFileSelected(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  try {
+    const state = await store.loadFromFile(file)
+    $q.notify({
+      type: 'positive',
+      message: `Importado: ${state.flujo.nombre}`,
+      position: 'top',
+    })
+    // Navigate to canvas con el flujo importado
+    router.push({ name: 'workflow-canvas', params: { id: state.flujo.id } })
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: `Error al importar: ${e.message}`,
+      position: 'top',
+    })
+  } finally {
+    // Reset input para permitir re-select same file
+    event.target.value = ''
   }
 }
 </script>

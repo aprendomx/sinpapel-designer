@@ -506,9 +506,12 @@ async function saveChanges() {
     isDirty.value = false
     selectedEdge.value = null
 
+    // S27.5: trigger download del JSON v0.2 (combined save UX per D5)
+    store.exportToFile()
+
     $q.notify({
       type: 'positive',
-      message: 'Stub save (S27.5 implementará persistencia)',
+      message: 'Workflow guardado (localStorage + descargado)',
       position: 'top',
     })
   } catch {
