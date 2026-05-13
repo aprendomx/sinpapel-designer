@@ -1,0 +1,111 @@
+{
+  "catalogos": {
+    "estados": [
+      {
+        "activo": true,
+        "color": "#a57f2c",
+        "descripcion": "Aprobado final",
+        "etapa": null,
+        "expediente_obligatorio": false,
+        "icono": "check_circle",
+        "nombre": "RT_APROBADO",
+        "orden": 3,
+        "permite_expediente": false
+      },
+      {
+        "activo": true,
+        "color": "#9b2247",
+        "descripcion": "Captura inicial",
+        "etapa": "RT_PreAprobacion",
+        "expediente_obligatorio": false,
+        "icono": "edit",
+        "nombre": "RT_CAPTURA",
+        "orden": 1,
+        "permite_expediente": false
+      },
+      {
+        "activo": true,
+        "color": "#1e5b4f",
+        "descripcion": "En revisión",
+        "etapa": null,
+        "expediente_obligatorio": false,
+        "icono": "visibility",
+        "nombre": "RT_REVISION",
+        "orden": 2,
+        "permite_expediente": false
+      }
+    ],
+    "etapas": [
+      {
+        "activo": true,
+        "color": "#a57f2c",
+        "descripcion": "Etapa inicial",
+        "nombre": "RT_PreAprobacion",
+        "orden": 1
+      }
+    ],
+    "grupos": [
+      {
+        "name": "RT_Administradores"
+      },
+      {
+        "name": "RT_ComiteCredito"
+      }
+    ],
+    "tipos_documento": [
+      {
+        "activo": true,
+        "color": "#9b2247",
+        "descripcion": "Identificación oficial",
+        "nombre": "RT_INE",
+        "orden": 1
+      }
+    ]
+  },
+  "exported_at": "2026-05-13T04:25:05.434200+00:00",
+  "flujo": {
+    "activo": false,
+    "descripcion": "S27.8 round-trip E2E synthetic fixture",
+    "metadatos": {
+      "positions": {
+        "RT_APROBADO": {
+          "x": 500,
+          "y": 200
+        },
+        "RT_CAPTURA": {
+          "x": 50,
+          "y": 50
+        },
+        "RT_REVISION": {
+          "x": 300,
+          "y": 100
+        }
+      }
+    },
+    "nombre": "RT_E2E_DEMO",
+    "requisitos": [
+      {
+        "auto_carga": false,
+        "estado": "RT_CAPTURA",
+        "porcentaje": 100,
+        "tipo_documento": "RT_INE"
+      }
+    ],
+    "transiciones": [
+      {
+        "estado_destino": "RT_REVISION",
+        "estado_origen": "RT_CAPTURA",
+        "grupos_permitidos": [
+          "RT_Administradores",
+          "RT_ComiteCredito"
+        ]
+      },
+      {
+        "estado_destino": "RT_APROBADO",
+        "estado_origen": "RT_REVISION",
+        "grupos_permitidos": []
+      }
+    ]
+  },
+  "schema_version": "0.2"
+}
