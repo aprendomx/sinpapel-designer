@@ -198,6 +198,26 @@ export const useWorkflowStore = defineStore('workflow', () => {
     isDirty.value = false
   }
 
+  // ── S27.6: deleteFlujo ───────────────────────────────────────────────
+
+  async function deleteFlujo(id) {
+    const key = `${STORAGE_PREFIX}${id}`
+    if (!localStorage.getItem(key)) {
+      throw new Error(`Flujo ${id} not found`)
+    }
+    localStorage.removeItem(key)
+    const indexRaw = localStorage.getItem(INDEX_KEY)
+    const ids = indexRaw ? JSON.parse(indexRaw) : []
+    const updated = ids.filter((i) => i !== id)
+    localStorage.setItem(INDEX_KEY, JSON.stringify(updated))
+    // D6: cascade clear current/snapshot if matching
+    if (current.value?.flujo?.id === id) {
+      current.value = null
+      snapshot.value = null
+      isDirty.value = false
+    }
+  }
+
   // ── S27.7: CRUD catalogos ────────────────────────────────────────────
   //
   // Generic internal helpers backing 4 catalogs × 3 ops. Each catalog has
@@ -450,6 +470,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     loadFromFile,
     exportToFile,
     discard,
+    // S27.6
+    deleteFlujo,
     // S27.7 CRUD catalogos
     addEstado, updateEstado, removeEstado,
     addEtapa, updateEtapa, removeEtapa,

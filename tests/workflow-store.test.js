@@ -83,6 +83,34 @@ describe('workflow store', () => {
     expect(store.current.flujo.nombre).toBe('Original')
   })
 
+  // ── S27.6 deleteFlujo tests ──
+
+  it('deleteFlujo removes from localStorage + index', async () => {
+    const store = useWorkflowStore()
+    const f1 = await store.createFlujo({ nombre: 'A' })
+    const f2 = await store.createFlujo({ nombre: 'B' })
+    await store.deleteFlujo(f1.id)
+    expect(localStorage.getItem(`sinpapel-designer/workflow/${f1.id}`)).toBeNull()
+    expect(localStorage.getItem(`sinpapel-designer/workflow/${f2.id}`)).toBeTruthy()
+    const index = JSON.parse(localStorage.getItem('sinpapel-designer/workflow-index'))
+    expect(index).toEqual([f2.id])
+  })
+
+  it('deleteFlujo cascades clear current if matching (D6)', async () => {
+    const store = useWorkflowStore()
+    const created = await store.createFlujo({ nombre: 'Active' })
+    await store.getFlujo(created.id)
+    expect(store.current).not.toBeNull()
+    await store.deleteFlujo(created.id)
+    expect(store.current).toBeNull()
+    expect(store.isDirty).toBe(false)
+  })
+
+  it('deleteFlujo throws if id not found', async () => {
+    const store = useWorkflowStore()
+    await expect(store.deleteFlujo('nonexistent')).rejects.toThrow(/not found/)
+  })
+
   it('validateSchema (via loadFromFile) rejects unsupported version', async () => {
     const store = useWorkflowStore()
     // jsdom File.text() incomplete — mock con minimal duck-typed object

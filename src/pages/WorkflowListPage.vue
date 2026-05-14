@@ -1,5 +1,16 @@
 <template>
-  <q-page class="wf-list">
+  <q-page
+    class="wf-list"
+    @dragover.prevent="onDragOver"
+    @dragleave.prevent="onDragLeave"
+    @drop.prevent="onDrop"
+  >
+
+    <!-- Drop overlay (S27.6) -->
+    <div v-if="isDragging" class="wf-list__drop-overlay">
+      <q-icon name="cloud_upload" size="64px" color="white" />
+      <div class="wf-list__drop-text">Suelta el archivo .json para importar</div>
+    </div>
 
     <!-- Hero header -->
     <div class="wf-list__hero">
@@ -105,6 +116,13 @@
               :loading="togglingId === flujo.id"
               @update:model-value="toggleActivo(flujo)"
             />
+            <q-btn
+              flat dense round
+              icon="delete"
+              color="negative"
+              :aria-label="`Eliminar ${flujo.nombre}`"
+              @click="confirmDelete(flujo)"
+            />
           </div>
         </div>
       </div>
@@ -154,11 +172,30 @@
       </q-card>
     </q-dialog>
 
+    <!-- Diálogo: Eliminar flujo (S27.6) -->
+    <q-dialog v-model="deleteDialogVisible" persistent>
+      <q-card style="min-width: 360px">
+        <q-card-section>
+          <div class="text-h6">Eliminar flujo</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <p>
+            ¿Eliminar el flujo <strong>{{ toDelete?.nombre }}</strong>?
+          </p>
+          <p class="text-caption text-grey-7">Esta acción no se puede deshacer.</p>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" v-close-popup />
+          <q-btn color="negative" label="Eliminar" @click="onConfirmDelete" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
   </q-page>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineExpose } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useWorkflowStore } from 'src/stores/workflow.js'
@@ -179,6 +216,12 @@ const nuevoFlujo = ref({ nombre: '', descripcion: '' })
 
 // Toggle activo
 const togglingId = ref(null)
+
+// S27.6 — DnD + delete state
+const isDragging = ref(false)
+const importing = ref(false)
+const deleteDialogVisible = ref(false)
+const toDelete = ref(null)
 
 onMounted(async () => {
   try {
@@ -235,9 +278,9 @@ function triggerFileInput() {
   fileInputRef.value?.click()
 }
 
-async function onFileSelected(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
+async function importFile(file) {
+  if (importing.value) return
+  importing.value = true
   try {
     const state = await store.loadFromFile(file)
     $q.notify({
@@ -245,7 +288,6 @@ async function onFileSelected(event) {
       message: `Importado: ${state.flujo.nombre}`,
       position: 'top',
     })
-    // Navigate to canvas con el flujo importado
     router.push({ name: 'workflow-canvas', params: { id: state.flujo.id } })
   } catch (e) {
     $q.notify({
@@ -254,10 +296,80 @@ async function onFileSelected(event) {
       position: 'top',
     })
   } finally {
-    // Reset input para permitir re-select same file
-    event.target.value = ''
+    importing.value = false
   }
 }
+
+async function onFileSelected(event) {
+  const file = event.target.files?.[0]
+  if (file) await importFile(file)
+  event.target.value = ''
+}
+
+// S27.6 — DnD handlers
+function onDragOver() {
+  if (importing.value) return
+  isDragging.value = true
+}
+
+function onDragLeave(e) {
+  // dragleave fires on child elements; only reset when leaving viewport
+  if (e.clientX === 0 && e.clientY === 0) isDragging.value = false
+}
+
+async function onDrop(e) {
+  isDragging.value = false
+  if (importing.value) return
+  const file = e.dataTransfer?.files?.[0]
+  if (!file) return
+  if (!file.name.endsWith('.json')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Solo se aceptan archivos .json',
+      position: 'top',
+    })
+    return
+  }
+  await importFile(file)
+}
+
+// S27.6 — Delete flow
+function confirmDelete(flujo) {
+  toDelete.value = flujo
+  deleteDialogVisible.value = true
+}
+
+async function onConfirmDelete() {
+  if (!toDelete.value) return
+  const id = toDelete.value.id
+  const nombre = toDelete.value.nombre
+  try {
+    await store.deleteFlujo(id)
+    flujos.value = flujos.value.filter((f) => f.id !== id)
+    $q.notify({
+      type: 'positive',
+      message: `Flujo "${nombre}" eliminado`,
+      position: 'top',
+    })
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: `Error: ${e.message}`,
+      position: 'top',
+    })
+  } finally {
+    deleteDialogVisible.value = false
+    toDelete.value = null
+  }
+}
+
+defineExpose({
+  isDragging,
+  importing,
+  deleteDialogVisible,
+  toDelete,
+  confirmDelete,
+})
 </script>
 
 <style>
@@ -268,6 +380,27 @@ async function onFileSelected(event) {
 .wf-list {
   background: #f2ece5;
   min-height: 100vh;
+  font-family: 'Cabin', sans-serif;
+}
+
+/* ── Drop overlay (S27.6) ───────────────────────────────────────── */
+.wf-list__drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(155, 34, 71, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.wf-list__drop-text {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 16px;
   font-family: 'Cabin', sans-serif;
 }
 
