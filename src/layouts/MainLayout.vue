@@ -53,6 +53,16 @@
             <span class="ds-nav-item__caption">Flujos de aprobación</span>
           </div>
         </router-link>
+
+        <router-link :to="{ name: 'catalogos' }" class="ds-nav-item" active-class="ds-nav-item--active">
+          <div class="ds-nav-item__icon">
+            <q-icon name="category" size="20px" />
+          </div>
+          <div class="ds-nav-item__text">
+            <span class="ds-nav-item__title">Catálogos</span>
+            <span class="ds-nav-item__caption">Estados, Etapas, Grupos</span>
+          </div>
+        </router-link>
       </div>
 
       <!-- Footer del drawer -->
