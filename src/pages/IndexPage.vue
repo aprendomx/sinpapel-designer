@@ -20,6 +20,21 @@
           </div>
         </q-card-section>
       </q-card>
+
+      <q-card
+        class="home-page__card"
+        clickable
+        v-ripple
+        @click="router.push({ name: 'catalogos' })"
+      >
+        <q-card-section class="home-page__card-body">
+          <q-icon name="category" size="48px" class="home-page__icon" />
+          <div class="home-page__card-title">Catálogos</div>
+          <div class="home-page__card-desc">
+            Edita Estados, Etapas, Grupos y Tipos de Documento
+          </div>
+        </q-card-section>
+      </q-card>
     </div>
   </q-page>
 </template>
