@@ -198,6 +198,186 @@ export const useWorkflowStore = defineStore('workflow', () => {
     isDirty.value = false
   }
 
+  // ── S27.7: CRUD catalogos ────────────────────────────────────────────
+  //
+  // Generic internal helpers backing 4 catalogs × 3 ops. Each catalog has
+  // a key in current.value (estados, etapas, grupos, tipos_documento) and
+  // a "name field" (`nombre` for 3, `name` for grupos).
+
+  const CATALOG_KEYS = {
+    estado: { key: 'estados', nameField: 'nombre' },
+    etapa: { key: 'etapas', nameField: 'nombre' },
+    grupo: { key: 'grupos', nameField: 'name' },
+    tipo_documento: { key: 'tipos_documento', nameField: 'nombre' },
+  }
+
+  function _addToCatalog(kind, data) {
+    if (!current.value) return null
+    const { key, nameField } = CATALOG_KEYS[kind]
+    const name = data[nameField]
+    if (!name) return null
+    const id = _hashId(name)
+    const entry = { id, ...data }
+    current.value[key].push(entry)
+    isDirty.value = true
+    return entry
+  }
+
+  function _updateInCatalog(kind, id, patch) {
+    if (!current.value) return null
+    const { key, nameField } = CATALOG_KEYS[kind]
+    const list = current.value[key]
+    const idx = list.findIndex((e) => e.id === id)
+    if (idx === -1) return null
+    const oldName = list[idx][nameField]
+    const newName = patch[nameField]
+    const renamed = newName && newName !== oldName
+    // Rename → regenerate id (PAT-S27.5: _hashId is content-derived)
+    const newId = renamed ? _hashId(newName) : id
+    const updated = { ...list[idx], ...patch, id: newId }
+    list[idx] = updated
+    if (renamed) {
+      _renameReferences(kind, oldName, newName)
+    }
+    isDirty.value = true
+    return updated
+  }
+
+  function _removeFromCatalog(kind, id) {
+    if (!current.value) return false
+    const { key, nameField } = CATALOG_KEYS[kind]
+    const list = current.value[key]
+    const idx = list.findIndex((e) => e.id === id)
+    if (idx === -1) return false
+    const name = list[idx][nameField]
+    list.splice(idx, 1)
+    _cascadeRemoveReferences(kind, name)
+    isDirty.value = true
+    return true
+  }
+
+  function _renameReferences(kind, oldName, newName) {
+    if (!current.value) return
+    if (kind === 'estado') {
+      // Update transitions estado_origen/destino.nombre
+      for (const t of current.value.transiciones) {
+        if (t.estado_origen?.nombre === oldName) t.estado_origen.nombre = newName
+        if (t.estado_destino?.nombre === oldName) t.estado_destino.nombre = newName
+      }
+      // Update requisitos.estado
+      for (const r of current.value.requisitos) {
+        if (r.estado === oldName) r.estado = newName
+        if (r.estado?.nombre === oldName) r.estado.nombre = newName
+      }
+      // Update positions (id-keyed internal; rename → new hashId)
+      const positions = current.value.flujo?.metadatos?.positions
+      if (positions) {
+        const oldId = _hashId(oldName)
+        const newId = _hashId(newName)
+        if (positions[oldId]) {
+          positions[newId] = positions[oldId]
+          delete positions[oldId]
+        }
+      }
+    } else if (kind === 'etapa') {
+      // Update estados.etapa string refs
+      for (const e of current.value.estados) {
+        if (e.etapa === oldName) e.etapa = newName
+        else if (e.etapa?.nombre === oldName) e.etapa.nombre = newName
+      }
+    } else if (kind === 'grupo') {
+      for (const t of current.value.transiciones) {
+        for (const g of t.grupos_permitidos || []) {
+          if (g.name === oldName) g.name = newName
+        }
+      }
+    } else if (kind === 'tipo_documento') {
+      for (const r of current.value.requisitos) {
+        if (r.tipo_documento === oldName) r.tipo_documento = newName
+        if (r.tipo_documento?.nombre === oldName) r.tipo_documento.nombre = newName
+      }
+    }
+  }
+
+  function _cascadeRemoveReferences(kind, name) {
+    if (!current.value) return
+    if (kind === 'estado') {
+      current.value.transiciones = current.value.transiciones.filter(
+        (t) => t.estado_origen?.nombre !== name && t.estado_destino?.nombre !== name,
+      )
+      current.value.requisitos = current.value.requisitos.filter(
+        (r) => (r.estado?.nombre || r.estado) !== name,
+      )
+    } else if (kind === 'etapa') {
+      // D3: auto-null Estado.etapa refs (no cascade delete)
+      for (const e of current.value.estados) {
+        if (e.etapa === name || e.etapa?.nombre === name) e.etapa = null
+      }
+    } else if (kind === 'grupo') {
+      for (const t of current.value.transiciones) {
+        t.grupos_permitidos = (t.grupos_permitidos || []).filter(
+          (g) => g.name !== name,
+        )
+      }
+    } else if (kind === 'tipo_documento') {
+      current.value.requisitos = current.value.requisitos.filter(
+        (r) => (r.tipo_documento?.nombre || r.tipo_documento) !== name,
+      )
+    }
+  }
+
+  // ── Public CRUD: 12 actions (3 × 4 catalogs) ─────────────────────────
+
+  function addEstado(data) { return _addToCatalog('estado', data) }
+  function updateEstado(id, patch) { return _updateInCatalog('estado', id, patch) }
+  function removeEstado(id) { return _removeFromCatalog('estado', id) }
+
+  function addEtapa(data) { return _addToCatalog('etapa', data) }
+  function updateEtapa(id, patch) { return _updateInCatalog('etapa', id, patch) }
+  function removeEtapa(id) { return _removeFromCatalog('etapa', id) }
+
+  function addGrupo(data) { return _addToCatalog('grupo', data) }
+  function updateGrupo(id, patch) { return _updateInCatalog('grupo', id, patch) }
+  function removeGrupo(id) { return _removeFromCatalog('grupo', id) }
+
+  function addTipoDocumento(data) { return _addToCatalog('tipo_documento', data) }
+  function updateTipoDocumento(id, patch) { return _updateInCatalog('tipo_documento', id, patch) }
+  function removeTipoDocumento(id) { return _removeFromCatalog('tipo_documento', id) }
+
+  // ── Reference helpers (delete safety) ────────────────────────────────
+
+  function findEstadoReferences(nombre) {
+    if (!current.value) return { transitions: 0 }
+    const transitions = current.value.transiciones.filter(
+      (t) => t.estado_origen?.nombre === nombre || t.estado_destino?.nombre === nombre,
+    ).length
+    return { transitions }
+  }
+
+  function findEtapaReferences(nombre) {
+    if (!current.value) return { dependentEstados: 0 }
+    const dependentEstados = current.value.estados.filter(
+      (e) => e.etapa === nombre || e.etapa?.nombre === nombre,
+    ).length
+    return { dependentEstados }
+  }
+
+  function findGrupoReferences(name) {
+    if (!current.value) return { transitions: 0 }
+    const transitions = current.value.transiciones.filter((t) =>
+      (t.grupos_permitidos || []).some((g) => g.name === name),
+    ).length
+    return { transitions }
+  }
+
+  function findTipoDocumentoReferences(nombre) {
+    if (!current.value) return { requisitos: 0 }
+    const requisitos = current.value.requisitos.filter(
+      (r) => (r.tipo_documento?.nombre || r.tipo_documento) === nombre,
+    ).length
+    return { requisitos }
+  }
+
   // ── Internal helpers ─────────────────────────────────────────────────
 
   function _clone(o) {
@@ -207,6 +387,14 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function _generateId() {
     // Unique id even within same millisecond (tests run fast).
     return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  }
+
+  function _hashId(str) {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+    }
+    return Math.abs(hash).toString()
   }
 
   function _addToIndex(id) {
@@ -262,5 +450,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
     loadFromFile,
     exportToFile,
     discard,
+    // S27.7 CRUD catalogos
+    addEstado, updateEstado, removeEstado,
+    addEtapa, updateEtapa, removeEtapa,
+    addGrupo, updateGrupo, removeGrupo,
+    addTipoDocumento, updateTipoDocumento, removeTipoDocumento,
+    findEstadoReferences, findEtapaReferences,
+    findGrupoReferences, findTipoDocumentoReferences,
   }
 })
