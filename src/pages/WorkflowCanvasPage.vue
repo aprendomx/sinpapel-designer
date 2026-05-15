@@ -4,7 +4,7 @@
     <!-- Header -->
     <div class="wf-canvas-page__header" :class="{ 'wf-canvas-page__header--edit': editMode }">
       <div class="wf-canvas-page__header-left">
-        <button class="wf-canvas-page__back" @click="router.push({ name: 'designer-workflows' })">
+        <button class="wf-canvas-page__back" @click="router.push({ name: 'workflows' })">
           <q-icon name="arrow_back" size="16px" />
           Workflows
         </button>

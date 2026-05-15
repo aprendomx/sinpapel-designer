@@ -15,6 +15,8 @@
 // Adapter funcionando bidireccional: serializeV0_2 (internal -> JSON),
 // parseV0_2 (JSON -> internal).
 
+import { hashId } from 'src/utils/hash-id.js'
+
 export const SCHEMA_VERSION_LATEST = '0.2'
 export const SUPPORTED_VERSIONS = ['0.1', '0.2']
 
@@ -65,7 +67,7 @@ export function parseV0_2(json) {
   const etapas = (cat.etapas || []).map(_deserializeEtapa)
   return {
     flujo: {
-      id: json.flujo.id || _hashId(json.flujo.nombre),
+      id: json.flujo.id || hashId(json.flujo.nombre),
       nombre: json.flujo.nombre,
       descripcion: json.flujo.descripcion || '',
       activo: json.flujo.activo ?? false,
@@ -88,7 +90,7 @@ export function parseV0_1(json) {
   // v0.1 has no catalogos section — return minimal v0.2 shape
   return {
     flujo: {
-      id: json.flujo.id || _hashId(json.flujo.nombre),
+      id: json.flujo.id || hashId(json.flujo.nombre),
       nombre: json.flujo.nombre,
       descripcion: json.flujo.descripcion || '',
       activo: json.flujo.activo ?? false,
@@ -181,7 +183,7 @@ function _serializeMetadatos(metadatos, estados) {
 
 function _deserializeEstado(e) {
   return {
-    id: _hashId(e.nombre),
+    id: hashId(e.nombre),
     nombre: e.nombre,
     color: e.color,
     icono: e.icono,
@@ -196,7 +198,7 @@ function _deserializeEstado(e) {
 
 function _deserializeEtapa(e) {
   return {
-    id: _hashId(e.nombre),
+    id: hashId(e.nombre),
     nombre: e.nombre,
     color: e.color,
     descripcion: e.descripcion || '',
@@ -207,7 +209,7 @@ function _deserializeEtapa(e) {
 
 function _deserializeTipoDocumento(t) {
   return {
-    id: _hashId(t.nombre),
+    id: hashId(t.nombre),
     nombre: t.nombre,
     color: t.color,
     descripcion: t.descripcion || '',
@@ -247,10 +249,4 @@ function _deserializeMetadatos(metadatos, estados) {
 
 // ── Helper: stable client-side id from string ────────────────────────────
 
-function _hashId(str) {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash).toString()
-}
+

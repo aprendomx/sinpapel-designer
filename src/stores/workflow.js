@@ -16,6 +16,7 @@ import {
   parseV0_1,
   validateSchema,
 } from 'src/data/schema-v0_2.js'
+import { hashId } from 'src/utils/hash-id.js'
 
 const STORAGE_PREFIX = 'sinpapel-designer/workflow/'
 const INDEX_KEY = 'sinpapel-designer/workflow-index'
@@ -236,7 +237,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const { key, nameField } = CATALOG_KEYS[kind]
     const name = data[nameField]
     if (!name) return null
-    const id = _hashId(name)
+    const id = hashId(name)
     const entry = { id, ...data }
     current.value[key].push(entry)
     isDirty.value = true
@@ -253,7 +254,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const newName = patch[nameField]
     const renamed = newName && newName !== oldName
     // Rename → regenerate id (PAT-S27.5: _hashId is content-derived)
-    const newId = renamed ? _hashId(newName) : id
+    const newId = renamed ? hashId(newName) : id
     const updated = { ...list[idx], ...patch, id: newId }
     list[idx] = updated
     if (renamed) {
@@ -292,8 +293,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
       // Update positions (id-keyed internal; rename → new hashId)
       const positions = current.value.flujo?.metadatos?.positions
       if (positions) {
-        const oldId = _hashId(oldName)
-        const newId = _hashId(newName)
+        const oldId = hashId(oldName)
+        const newId = hashId(newName)
         if (positions[oldId]) {
           positions[newId] = positions[oldId]
           delete positions[oldId]
@@ -409,13 +410,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   }
 
-  function _hashId(str) {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
-    }
-    return Math.abs(hash).toString()
-  }
+
 
   function _addToIndex(id) {
     const raw = localStorage.getItem(INDEX_KEY)
