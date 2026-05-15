@@ -20,7 +20,7 @@
       </div>
 
       <div class="wf-canvas-page__toolbar">
-        <template v-if="editMode && isDirty">
+        <template v-if="editMode && store.isDirty">
           <span class="wf-canvas-page__unsaved-dot"></span>
           <q-btn
             flat no-caps
@@ -257,7 +257,6 @@ const error = ref(false)
 
 // Edit mode state
 const editMode = ref(false)
-const isDirty = ref(false)
 const saving = ref(false)
 
 // Panel lateral (edge)
@@ -402,7 +401,7 @@ function onCanvasDrop(event) {
       data: { color: estado.color, icono: estado.icono, estado_id: estado.id },
     },
   ]
-  isDirty.value = true
+  store.isDirty = true
 }
 
 // ── Edit mode events ──────────────────────────────────────────────────────────
@@ -468,14 +467,14 @@ function onEdgeGruposChange(newGrupos) {
   })
   // Keep selectedEdge in sync
   selectedEdge.value = edges.value.find(e => e.id === selectedEdge.value?.id) ?? null
-  isDirty.value = true
+  store.isDirty = true
 }
 
 function eliminarEdge(edge) {
   edges.value = edges.value.filter(e => e.id !== edge.id)
   selectedEdge.value = null
   selectedEdgeGrupos.value = []
-  isDirty.value = true
+  store.isDirty = true
 }
 
 // ── Save / Discard ────────────────────────────────────────────────────────────
@@ -503,7 +502,7 @@ async function saveChanges() {
     // Update snapshot after save
     snapshotNodes = JSON.parse(JSON.stringify(nodes.value))
     snapshotEdges = JSON.parse(JSON.stringify(edges.value))
-    isDirty.value = false
+    store.isDirty = false
     selectedEdge.value = null
 
     // S27.5: trigger download del JSON v0.2 (combined save UX per D5)
@@ -524,7 +523,7 @@ async function saveChanges() {
 function discardChanges() {
   nodes.value = JSON.parse(JSON.stringify(snapshotNodes))
   edges.value = JSON.parse(JSON.stringify(snapshotEdges))
-  isDirty.value = false
+  store.isDirty = false
   selectedEdge.value = null
   selectedEdgeGrupos.value = []
 }
