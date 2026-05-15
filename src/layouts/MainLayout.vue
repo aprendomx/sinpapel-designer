@@ -95,8 +95,8 @@ const leftDrawerOpen = ref(false)
 <style scoped>
 /* ─── Header ─── */
 .ds-header {
-  background: linear-gradient(135deg, #9b2247 0%, #611232 100%) !important;
-  border-bottom: 3px solid #a57f2c;
+  background: linear-gradient(135deg, var(--sp-primary) 0%, var(--sp-primary-darker) 100%) !important;
+  border-bottom: 3px solid var(--sp-secondary);
 }
 
 .ds-toolbar {
@@ -134,7 +134,7 @@ const leftDrawerOpen = ref(false)
 .ds-toolbar__sigla {
   font-size: 18px;
   font-weight: 700;
-  color: #a57f2c;
+  color: var(--sp-secondary);
   font-family: 'Cabin', sans-serif;
   letter-spacing: 0.5px;
 }
@@ -182,8 +182,8 @@ const leftDrawerOpen = ref(false)
   align-items: center;
   gap: 10px;
   padding: 20px 16px 16px;
-  background: linear-gradient(135deg, #9b2247, #611232);
-  border-bottom: 3px solid #a57f2c;
+  background: linear-gradient(135deg, var(--sp-primary), var(--sp-primary-darker));
+  border-bottom: 3px solid var(--sp-secondary);
 }
 
 .ds-drawer__brand-icon {
@@ -191,7 +191,7 @@ const leftDrawerOpen = ref(false)
   height: 40px;
   border-radius: 10px;
   background: rgba(165, 127, 44, 0.25);
-  color: #a57f2c;
+  color: var(--sp-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,7 +201,7 @@ const leftDrawerOpen = ref(false)
 .ds-drawer__brand-sigla {
   font-size: 16px;
   font-weight: 700;
-  color: #a57f2c;
+  color: var(--sp-secondary);
   font-family: 'Cabin', sans-serif;
 }
 
@@ -254,7 +254,7 @@ const leftDrawerOpen = ref(false)
   height: 36px;
   border-radius: 8px;
   background: #f5eae8;
-  color: #9b2247;
+  color: var(--sp-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,7 +291,7 @@ const leftDrawerOpen = ref(false)
 }
 
 .ds-nav-item--active .ds-nav-item__title {
-  color: #9b2247;
+  color: var(--sp-primary);
 }
 
 /* Footer */
@@ -325,7 +325,7 @@ const leftDrawerOpen = ref(false)
 
 .ds-drawer__back-link:hover {
   background: #f5eae8;
-  border-color: #a57f2c;
+  border-color: var(--sp-secondary);
   color: #161a1d;
 }
 </style>

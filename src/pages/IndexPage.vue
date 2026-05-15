@@ -64,7 +64,7 @@ const router = useRouter()
 .home-page__title {
   font-size: 28px;
   font-weight: 700;
-  color: #9b2247;
+  color: var(--sp-primary);
   margin: 0 0 6px;
 }
 
@@ -104,13 +104,13 @@ const router = useRouter()
 }
 
 .home-page__icon {
-  color: #a57f2c;
+  color: var(--sp-secondary);
 }
 
 .home-page__card-title {
   font-size: 18px;
   font-weight: 700;
-  color: #9b2247;
+  color: var(--sp-primary);
 }
 
 .home-page__card-desc {

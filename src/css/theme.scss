@@ -1,0 +1,42 @@
+// Sinpapel Designer — CSS Custom Properties (Design Tokens)
+// Paleta basada en créditos (guinda + dorado + verde éxito)
+
+:root {
+  /* Primary palette */
+  --sp-primary: #9b2247;
+  --sp-primary-dark: #7a1836;
+  --sp-primary-darker: #611232;
+  --sp-primary-light: #b0355c;
+
+  /* Secondary / accent */
+  --sp-secondary: #a57f2c;
+  --sp-secondary-light: #c4a055;
+  --sp-accent: #4defe2;
+
+  /* Semantic */
+  --sp-success: #1e5b4f;
+  --sp-success-bg: #e4f3ec;
+  --sp-warn: #f08217;
+  --sp-error: #9b2247;
+
+  /* Backgrounds */
+  --sp-bg: #f2ece5;
+  --sp-bg-light: #faf5ef;
+  --sp-bg-white: #ffffff;
+  --sp-bg-muted: #fdfbf6;
+
+  /* Text */
+  --sp-text: #1e0c14;
+  --sp-text-secondary: #4a3e38;
+  --sp-text-muted: #9a8e87;
+  --sp-text-placeholder: #aaa;
+
+  /* Borders */
+  --sp-border: #e6ddd4;
+  --sp-border-light: #ddd4ca;
+  --sp-border-dark: #d5cbc0;
+
+  /* Sidebar / panels */
+  --sp-sidebar-bg: #2a0e1c;
+  --sp-sidebar-text: rgba(255, 255, 255, 0.6);
+}

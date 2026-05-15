@@ -78,7 +78,7 @@ const workflowName = computed(() => store.current?.flujo?.nombre || null)
 .catalogos-page__title {
   font-size: 24px;
   font-weight: 700;
-  color: #9b2247;
+  color: var(--sp-primary);
   margin: 0 0 6px;
 }
 .catalogos-page__subtitle {
