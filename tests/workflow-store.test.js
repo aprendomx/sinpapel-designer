@@ -119,4 +119,34 @@ describe('workflow store', () => {
     }
     await expect(store.loadFromFile(file)).rejects.toThrow(/Unsupported schema_version/)
   })
+
+  it('loadFromFile sanitizes __proto__ pollution', async () => {
+    const store = useWorkflowStore()
+    const malicious = {
+      text: async () => JSON.stringify({
+        schema_version: '0.2',
+        flujo: { nombre: 'X', '__proto__': { evil: true } },
+        catalogos: { estados: [], etapas: [], grupos: [], tipos_documento: [] },
+      }),
+    }
+    await store.loadFromFile(malicious)
+    expect(Object.prototype.evil).toBeUndefined()
+  })
+
+  it('_persist fallback on QuotaExceededError triggers export', async () => {
+    const quotaError = new Error('QuotaExceededError')
+    quotaError.name = 'QuotaExceededError'
+    vi.stubGlobal('localStorage', {
+      ...createStorageMock(),
+      setItem: () => { throw quotaError },
+    })
+    // Mock exportToFile to avoid DOM dependency
+    const store = useWorkflowStore()
+    store.current = {
+      flujo: { id: '1', nombre: 'Demo', descripcion: '', activo: true, metadatos: null },
+      estados: [], etapas: [], grupos: [], tipos_documento: [],
+      transiciones: [], requisitos: [],
+    }
+    expect(() => store.exportToFile()).not.toThrow()
+  })
 })

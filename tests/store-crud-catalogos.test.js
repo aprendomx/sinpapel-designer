@@ -50,6 +50,20 @@ describe('store CRUD catalogos', () => {
     expect(store.isDirty).toBe(true)
   })
 
+  it('addEstado throws on duplicate nombre', async () => {
+    const store = await setupStoreWithFlujo()
+    store.addEstado({ nombre: 'CAPTURA', orden: 1, activo: true })
+    expect(() => store.addEstado({ nombre: 'CAPTURA', orden: 2, activo: true })).toThrow(/ya existe/)
+  })
+
+  it('updateEstado throws on rename collision', async () => {
+    const store = await setupStoreWithFlujo()
+    store.addEstado({ nombre: 'A', orden: 1, activo: true })
+    store.addEstado({ nombre: 'B', orden: 2, activo: true })
+    const idA = store.current.estados[0].id
+    expect(() => store.updateEstado(idA, { nombre: 'B' })).toThrow(/ya existe/)
+  })
+
   it('removeEstado cascades transitions referencing it', async () => {
     const store = await setupStoreWithFlujo()
     store.addEstado({ nombre: 'A', orden: 1, activo: true })

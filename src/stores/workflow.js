@@ -17,6 +17,7 @@ import {
   validateSchema,
 } from 'src/data/schema-v0_2.js'
 import { hashId } from 'src/utils/hash-id.js'
+import { sanitizeJsonInput } from 'src/utils/sanitize.js'
 
 const STORAGE_PREFIX = 'sinpapel-designer/workflow/'
 const INDEX_KEY = 'sinpapel-designer/workflow-index'
@@ -163,7 +164,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   async function loadFromFile(file) {
     const text = await file.text()
-    const json = JSON.parse(text)
+    const json = sanitizeJsonInput(JSON.parse(text))
     validateSchema(json)
     const state =
       json.schema_version === '0.1' ? parseV0_1(json) : parseV0_2(json)
@@ -232,11 +233,18 @@ export const useWorkflowStore = defineStore('workflow', () => {
     tipo_documento: { key: 'tipos_documento', nameField: 'nombre' },
   }
 
+  function _assertUniqueName(kind, name, excludeId = null) {
+    const { key, nameField } = CATALOG_KEYS[kind]
+    const exists = current.value[key].some((e) => e[nameField] === name && e.id !== excludeId)
+    if (exists) throw new Error(`${kind} con ${nameField}='${name}' ya existe`)
+  }
+
   function _addToCatalog(kind, data) {
     if (!current.value) return null
     const { key, nameField } = CATALOG_KEYS[kind]
     const name = data[nameField]
     if (!name) return null
+    _assertUniqueName(kind, name)
     const id = hashId(name)
     const entry = { id, ...data }
     current.value[key].push(entry)
@@ -253,7 +261,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const oldName = list[idx][nameField]
     const newName = patch[nameField]
     const renamed = newName && newName !== oldName
-    // Rename → regenerate id (PAT-S27.5: _hashId is content-derived)
+    if (renamed) {
+      _assertUniqueName(kind, newName, id)
+    }
+    // Rename → regenerate id (PAT-S27.5: hashId is content-derived)
     const newId = renamed ? hashId(newName) : id
     const updated = { ...list[idx], ...patch, id: newId }
     list[idx] = updated
@@ -426,8 +437,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
       const json = serializeV0_2(state)
       localStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(json))
     } catch (e) {
-      if (e.name === 'QuotaExceededError') {
+      if (e.name === 'QuotaExceededError' || e.message?.includes('quota')) {
         console.warn('[workflow-store] localStorage quota exceeded')
+        exportToFile()
+        throw new Error('Almacenamiento local lleno. Se descargó el archivo de respaldo.')
       }
       throw e
     }
