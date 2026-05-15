@@ -2,53 +2,14 @@
   <q-page class="wf-canvas-page">
 
     <!-- Header -->
-    <div class="wf-canvas-page__header" :class="{ 'wf-canvas-page__header--edit': editMode }">
-      <div class="wf-canvas-page__header-left">
-        <button class="wf-canvas-page__back" @click="router.push({ name: 'workflows' })">
-          <q-icon name="arrow_back" size="16px" />
-          Workflows
-        </button>
-        <div class="wf-canvas-page__title-row">
-          <h2 class="wf-canvas-page__title">{{ flujo?.nombre ?? '…' }}</h2>
-          <span
-            v-if="flujo"
-            class="wf-canvas-page__status-badge"
-            :class="flujo.activo ? 'wf-canvas-page__status-badge--on' : 'wf-canvas-page__status-badge--off'"
-          >{{ flujo.activo ? 'Activo' : 'Inactivo' }}</span>
-        </div>
-        <p v-if="flujo?.descripcion" class="wf-canvas-page__desc">{{ flujo.descripcion }}</p>
-      </div>
-
-      <div class="wf-canvas-page__toolbar">
-        <template v-if="editMode && store.isDirty">
-          <span class="wf-canvas-page__unsaved-dot"></span>
-          <q-btn
-            flat no-caps
-            label="Descartar"
-            icon="undo"
-            class="wf-canvas-page__btn-discard"
-            :disable="saving"
-            @click="discardChanges"
-          />
-          <q-btn
-            unelevated no-caps
-            label="Guardar"
-            icon="save"
-            class="wf-canvas-page__btn-save"
-            :loading="saving"
-            @click="saveChanges"
-          />
-        </template>
-        <q-toggle
-          v-model="editMode"
-          label="Editar"
-          color="primary"
-          left-label
-          class="wf-canvas-page__edit-toggle"
-          :disable="saving"
-        />
-      </div>
-    </div>
+    <WorkflowCanvasToolbar
+      :flujo="flujo"
+      v-model:edit-mode="editMode"
+      :is-dirty="store.isDirty"
+      :saving="saving"
+      @discard="discardChanges"
+      @save="saveChanges"
+    />
 
     <!-- Loading -->
     <div v-if="loading" class="wf-canvas-page__loading">
@@ -66,71 +27,12 @@
     <div v-else class="wf-canvas-page__body">
 
       <!-- Left: estados disponibles -->
-      <transition name="panel-slide">
-        <div v-if="editMode" class="wf-canvas-page__states-panel">
-          <div class="wf-states__header">
-            <q-icon name="widgets" size="14px" style="color: rgba(255,255,255,0.6)" />
-            <span>Estados</span>
-          </div>
-          <div class="wf-states__filter">
-            <q-input
-              v-model="filtroEstados"
-              dense
-              borderless
-              placeholder="Filtrar estados…"
-              class="wf-states__filter-input"
-            >
-              <template #prepend>
-                <q-icon name="search" size="14px" style="color: rgba(255,255,255,0.4)" />
-              </template>
-              <template v-if="filtroEstados" #append>
-                <q-icon
-                  name="close"
-                  size="14px"
-                  style="color: rgba(255,255,255,0.4); cursor: pointer"
-                  @click="filtroEstados = ''"
-                />
-              </template>
-            </q-input>
-          </div>
-          <p class="wf-states__hint">Arrastra al canvas para agregar</p>
-          <div class="wf-states__list">
-            <div
-              v-for="estado in estadosFiltrados"
-              :key="estado.id"
-              class="wf-states__chip"
-              :class="{ 'wf-states__chip--en-canvas': idsEnCanvas.has(String(estado.id)) }"
-              :draggable="!idsEnCanvas.has(String(estado.id))"
-              @dragstart="onSidebarDragStart($event, estado)"
-            >
-              <span
-                class="material-icons wf-states__chip-icon"
-                :style="{ color: estado.color || '#9b2247' }"
-              >{{ estado.icono || 'circle' }}</span>
-              <div class="wf-states__chip-content">
-                <span class="wf-states__chip-name">{{ estado.nombre }}</span>
-                <span v-if="estado.descripcion" class="wf-states__chip-desc">{{ estado.descripcion }}</span>
-              </div>
-              <q-icon
-                v-if="idsEnCanvas.has(String(estado.id))"
-                name="check_circle"
-                size="14px"
-                class="wf-states__chip-check"
-              />
-              <q-icon
-                v-else
-                name="drag_indicator"
-                size="14px"
-                class="wf-states__chip-drag"
-              />
-            </div>
-            <div v-if="estadosFiltrados.length === 0" class="wf-states__all-done">
-              <q-icon name="search_off" size="20px" style="color: rgba(255,255,255,0.4)" />
-              <span>Sin resultados</span>
-            </div>
-          </div>
-        </div>
-      </transition>
+      <WorkflowCanvasStatesPanel
+        :estados="todosEstatuses"
+        :ids-en-canvas="idsEnCanvas"
+        :edit-mode="editMode"
+        @drag-start="onSidebarDragStart"
+      />
 
       <!-- Canvas -->
       <div
@@ -181,46 +83,13 @@
       </div>
 
       <!-- Right: transición seleccionada -->
-      <transition name="panel-slide">
-        <div v-if="editMode && selectedEdge" class="wf-canvas-page__panel">
-          <div class="wf-panel__header">
-            <q-icon name="swap_horiz" size="16px" />
-            <span>Transición</span>
-          </div>
-
-          <div class="wf-panel__route">
-            <span class="wf-panel__state-tag">{{ selectedEdge.data?.origen_nombre }}</span>
-            <q-icon name="arrow_forward" size="12px" style="color: #a57f2c; flex-shrink:0" />
-            <span class="wf-panel__state-tag">{{ selectedEdge.data?.destino_nombre }}</span>
-          </div>
-
-          <div class="wf-panel__divider"></div>
-
-          <div class="wf-panel__field-label">Grupos permitidos</div>
-          <p class="wf-panel__field-hint">Vacío = cualquier usuario puede ejecutarla</p>
-          <q-select
-            v-model="selectedEdgeGrupos"
-            :options="gruposOptions"
-            option-value="id"
-            option-label="name"
-            multiple
-            use-chips
-            dense
-            outlined
-            emit-value
-            map-options
-            class="q-mt-xs"
-            @update:model-value="onEdgeGruposChange"
-          />
-
-          <div class="wf-panel__divider"></div>
-
-          <button class="wf-panel__delete-btn" @click="eliminarEdge(selectedEdge)">
-            <q-icon name="delete_outline" size="15px" />
-            Eliminar transición
-          </button>
-        </div>
-      </transition>
+      <WorkflowCanvasTransitionPanel
+        :selected-edge="selectedEdge"
+        :grupos-options="gruposOptions"
+        :edit-mode="editMode"
+        @grupos-change="onEdgeGruposChange"
+        @delete-edge="eliminarEdge"
+      />
 
     </div>
   </q-page>
@@ -240,6 +109,9 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 import { useWorkflowStore } from 'src/stores/workflow.js'
+import WorkflowCanvasToolbar from 'src/components/WorkflowCanvasToolbar.vue'
+import WorkflowCanvasStatesPanel from 'src/components/WorkflowCanvasStatesPanel.vue'
+import WorkflowCanvasTransitionPanel from 'src/components/WorkflowCanvasTransitionPanel.vue'
 
 // ── Page logic ───────────────────────────────────────────────────────────────
 
@@ -267,19 +139,6 @@ const gruposOptions = ref([])
 // Estados sidebar
 const todosEstatuses = ref([])
 const draggedEstado = ref(null)
-const filtroEstados = ref('')
-
-const estadosFiltrados = computed(() => {
-  const termino = filtroEstados.value.toLowerCase().trim()
-  let lista = todosEstatuses.value
-  if (termino) {
-    lista = lista.filter(e =>
-      e.nombre.toLowerCase().includes(termino) ||
-      (e.descripcion && e.descripcion.toLowerCase().includes(termino))
-    )
-  }
-  return lista
-})
 
 const idsEnCanvas = computed(() => new Set(nodes.value.map(n => n.id)))
 
