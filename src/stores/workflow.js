@@ -30,8 +30,16 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const isDirty = ref(false)
   let saveTimeoutId = null
 
+  // Undo/redo history
+  const history = ref([])
+  const historyIndex = ref(-1)
+  const MAX_HISTORY = 50
+  let isRestoring = false
+
   // ── Computed ─────────────────────────────────────────────────────────
   const hasWorkflow = computed(() => current.value !== null)
+  const canUndo = computed(() => historyIndex.value > 0)
+  const canRedo = computed(() => historyIndex.value < history.value.length - 1)
 
   // ── Actions: stub-interface match (S27.4 page compat) ────────────────
 
@@ -71,6 +79,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     current.value = state
     snapshot.value = _clone(state)
     isDirty.value = false
+    _resetHistory(state)
     return state.flujo
   }
 
@@ -109,6 +118,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
     _persist(id, state)
     _addToIndex(id)
+    current.value = state
+    snapshot.value = _clone(state)
+    isDirty.value = false
+    _resetHistory(state)
     return { ...state.flujo }
   }
 
@@ -146,7 +159,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         return g || { id: gid, name: String(gid) }
       }),
     }))
-    isDirty.value = true
+    _markDirty()
   }
 
   async function saveLayout(id, positions) {
@@ -157,7 +170,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       ...(current.value.flujo.metadatos || {}),
       positions,
     }
-    isDirty.value = true
+    _markDirty()
   }
 
   // ── New actions S27.5 ───────────────────────────────────────────────
@@ -176,6 +189,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     isDirty.value = false
     _persist(id, state)
     _addToIndex(id)
+    _resetHistory(state)
     return state
   }
 
@@ -196,6 +210,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function discard() {
     if (snapshot.value) {
       current.value = _clone(snapshot.value)
+      _resetHistory(current.value)
     }
     isDirty.value = false
   }
@@ -248,7 +263,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const id = hashId(name)
     const entry = { id, ...data }
     current.value[key].push(entry)
-    isDirty.value = true
+    _markDirty()
     return entry
   }
 
@@ -271,7 +286,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     if (renamed) {
       _renameReferences(kind, oldName, newName)
     }
-    isDirty.value = true
+    _markDirty()
     return updated
   }
 
@@ -284,7 +299,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const name = list[idx][nameField]
     list.splice(idx, 1)
     _cascadeRemoveReferences(kind, name)
-    isDirty.value = true
+    _markDirty()
     return true
   }
 
@@ -416,6 +431,52 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return JSON.parse(JSON.stringify(o))
   }
 
+  function _pushHistory() {
+    if (!current.value || isRestoring) return
+    const clone = _clone(current.value)
+    const last = history.value[historyIndex.value]
+    if (last && JSON.stringify(last) === JSON.stringify(clone)) return
+    if (historyIndex.value < history.value.length - 1) {
+      history.value = history.value.slice(0, historyIndex.value + 1)
+    }
+    history.value.push(clone)
+    if (history.value.length > MAX_HISTORY) {
+      history.value.shift()
+    } else {
+      historyIndex.value++
+    }
+  }
+
+  function _markDirty() {
+    isDirty.value = true
+    _pushHistory()
+  }
+
+  function undo() {
+    if (historyIndex.value <= 0) return
+    historyIndex.value--
+    isRestoring = true
+    current.value = _clone(history.value[historyIndex.value])
+    snapshot.value = _clone(current.value)
+    isDirty.value = false
+    isRestoring = false
+  }
+
+  function redo() {
+    if (historyIndex.value >= history.value.length - 1) return
+    historyIndex.value++
+    isRestoring = true
+    current.value = _clone(history.value[historyIndex.value])
+    snapshot.value = _clone(current.value)
+    isDirty.value = false
+    isRestoring = false
+  }
+
+  function _resetHistory(state) {
+    history.value = [state ? _clone(state) : null].filter(Boolean)
+    historyIndex.value = 0
+  }
+
   function _generateId() {
     // Unique id even within same millisecond (tests run fast).
     return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -449,7 +510,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
   // ── Autosave debounce ────────────────────────────────────────────────
 
   watch(isDirty, (val) => {
-    if (val && current.value?.flujo?.id) {
+    if (val && current.value?.flujo?.id && !isRestoring) {
+      _pushHistory()
       clearTimeout(saveTimeoutId)
       saveTimeoutId = setTimeout(() => {
         _persist(current.value.flujo.id, current.value)
@@ -464,6 +526,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
     current,
     isDirty,
     hasWorkflow,
+    // Undo/redo
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     // Stub-interface actions
     getFlujos,
     getFlujo,

@@ -149,4 +149,41 @@ describe('workflow store', () => {
     }
     expect(() => store.exportToFile()).not.toThrow()
   })
+
+  // ── Undo/Redo tests ──
+
+  it('undo restores previous state after mutation', async () => {
+    const store = useWorkflowStore()
+    await store.createFlujo({ nombre: 'UndoTest' })
+    expect(store.canUndo).toBe(false)
+    store.addEstado({ nombre: 'A', orden: 1, activo: true })
+    expect(store.current.estados.length).toBe(1)
+    expect(store.canUndo).toBe(true)
+    store.undo()
+    expect(store.current.estados.length).toBe(0)
+    expect(store.canRedo).toBe(true)
+  })
+
+  it('redo re-applies undone mutation', async () => {
+    const store = useWorkflowStore()
+    await store.createFlujo({ nombre: 'RedoTest' })
+    store.addEstado({ nombre: 'B', orden: 1, activo: true })
+    store.undo()
+    expect(store.current.estados.length).toBe(0)
+    store.redo()
+    expect(store.current.estados.length).toBe(1)
+    expect(store.current.estados[0].nombre).toBe('B')
+    expect(store.canRedo).toBe(false)
+  })
+
+  it('discard resets history to snapshot', async () => {
+    const store = useWorkflowStore()
+    await store.createFlujo({ nombre: 'DiscardTest' })
+    store.addEstado({ nombre: 'C', orden: 1, activo: true })
+    expect(store.canUndo).toBe(true)
+    store.discard()
+    expect(store.current.estados.length).toBe(0)
+    expect(store.canUndo).toBe(false)
+    expect(store.canRedo).toBe(false)
+  })
 })

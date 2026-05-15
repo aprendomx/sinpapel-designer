@@ -7,8 +7,12 @@
       v-model:edit-mode="editMode"
       :is-dirty="store.isDirty"
       :saving="saving"
+      :can-undo="store.canUndo"
+      :can-redo="store.canRedo"
       @discard="discardChanges"
       @save="saveChanges"
+      @undo="store.undo()"
+      @redo="store.redo()"
     />
 
     <!-- Loading -->
@@ -112,6 +116,7 @@ import { useWorkflowStore } from 'src/stores/workflow.js'
 import WorkflowCanvasToolbar from 'src/components/WorkflowCanvasToolbar.vue'
 import WorkflowCanvasStatesPanel from 'src/components/WorkflowCanvasStatesPanel.vue'
 import WorkflowCanvasTransitionPanel from 'src/components/WorkflowCanvasTransitionPanel.vue'
+import { useCanvasKeyboard } from 'src/composables/useCanvasKeyboard.js'
 
 // ── Page logic ───────────────────────────────────────────────────────────────
 
@@ -145,6 +150,23 @@ const idsEnCanvas = computed(() => new Set(nodes.value.map(n => n.id)))
 // Snapshot for discard
 let snapshotNodes = []
 let snapshotEdges = []
+
+useCanvasKeyboard({
+  editMode,
+  selectedEdge,
+  onSave: saveChanges,
+  onUndo: () => store.undo(),
+  onRedo: () => store.redo(),
+  onDeleteEdge: eliminarEdge,
+  onEscape: (action) => {
+    if (action === 'close-panel') {
+      selectedEdge.value = null
+      selectedEdgeGrupos.value = []
+    } else if (action === 'exit-edit') {
+      editMode.value = false
+    }
+  },
+})
 
 function miniMapColor(node) {
   return node.data?.color || '#9b2247'

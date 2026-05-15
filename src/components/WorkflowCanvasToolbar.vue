@@ -17,6 +17,21 @@
     </div>
 
     <div class="wf-canvas-page__toolbar">
+      <template v-if="editMode">
+        <q-btn
+          flat dense round
+          icon="undo"
+          :disable="!canUndo || saving"
+          @click="$emit('undo')"
+        />
+        <q-btn
+          flat dense round
+          icon="redo"
+          :disable="!canRedo || saving"
+          @click="$emit('redo')"
+        />
+        <div class="wf-canvas-page__toolbar-divider"></div>
+      </template>
       <template v-if="editMode && isDirty">
         <span class="wf-canvas-page__unsaved-dot"></span>
         <q-btn
@@ -57,9 +72,11 @@ const props = defineProps({
   editMode: { type: Boolean, default: false },
   isDirty: { type: Boolean, default: false },
   saving: { type: Boolean, default: false },
+  canUndo: { type: Boolean, default: false },
+  canRedo: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:editMode', 'discard', 'save'])
+const emit = defineEmits(['update:editMode', 'discard', 'save', 'undo', 'redo'])
 
 const router = useRouter()
 
@@ -186,6 +203,13 @@ const localEditMode = computed({
   font-family: 'Cabin', sans-serif;
   font-weight: 700;
   font-size: 13px;
+}
+
+.wf-canvas-page__toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #e0d8cc;
+  margin: 0 4px;
 }
 
 .wf-canvas-page__edit-toggle {
