@@ -56,3 +56,49 @@ ADRs viven en `creditos/dev/decisions/`:
 ## Smoke test
 
 `tests/smoke.test.js` valida que `IndexPage.vue` monta en jsdom con todos los componentes (Vue Flow stubbed). Real Vue Flow + Quasar coexistence se valida via `npm run dev` + browser visual — ver 2 nodos + 1 edge + botón Quasar en la home page.
+
+## Linting & testing with `rai-frontend-gates`
+
+This project integrates [`rai-frontend-gates`](https://github.com/aprendomx/rai-frontend-gates) — a Python wrapper that extends the [`rai-cli`](https://github.com/humansys/raise) `gate check` UX to npm-based stacks (vitest, eslint, build). It adds **delta-vs-baseline display** on top of bare `npm run *`.
+
+### Install
+
+```bash
+pip install "rai-frontend-gates @ git+ssh://git@github.com/aprendomx/rai-frontend-gates.git@v0.1.0"
+```
+
+Requires Python 3.10+. Until `v0.1.0` lands as a tag (S30.4), use `@develop`.
+
+### Usage
+
+```bash
+# List available gates (detected from package.json scripts)
+rai-frontend gate list
+# → gate-tests  → npm run test
+#   gate-lint   → npm run lint
+#   gate-build  → npm run build
+
+# Run a gate (transparent: npm exit → wrapper exit)
+rai-frontend gate check gate-tests
+rai-frontend gate check gate-lint
+rai-frontend gate check gate-build
+
+# Delta-vs-baseline (lint only; tests/build use exit code)
+rai-frontend baseline snapshot --gate gate-lint
+# ... make changes ...
+rai-frontend gate check gate-lint --delta
+# → baseline: 0 errors | current: 2 errors | delta: +2 new, -0 fixed, 0 kept
+#   + src/pages/X.vue:42 [no-unused-vars] 'foo' is defined but never used
+
+rai-frontend baseline reset --gate gate-lint
+```
+
+### Why?
+
+- **Frontend gate parity** with `rai gate check` (consistent CLI surface across Python + npm stacks).
+- **Delta display** is more actionable than absolute error counts (recurring retro request, governance).
+- **Auto-invalidation** when `package.json` version bumps (no stale baseline footguns).
+
+See **ADR-019** in `creditos/dev/decisions/adr-019-rai-frontend-gates-wrapper.md` for full architectural rationale (lands S30.4).
+
+The baseline cache lives at `.rai-frontend/baseline.json` (gitignored — local per-developer).

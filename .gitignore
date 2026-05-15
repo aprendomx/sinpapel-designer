@@ -9,3 +9,6 @@ coverage/
 *.swp
 .idea/
 .vscode/
+
+# rai-frontend-gates baseline cache (local per-developer; not committed)
+.rai-frontend/
