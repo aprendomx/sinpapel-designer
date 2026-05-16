@@ -8,13 +8,12 @@
  * actual fetch/axios calls.
  */
 
-const API_BASE = import.meta.env.VITE_SINPAPEL_API_URL || '/api/sinpapel'
-
 /**
  * Export current workflow state to backend via sinpapel_import_flujo.
  * @param {Object} state - Internal state shape (id-based)
  * @returns {Promise<{success: boolean, flujo_id?: string, errors?: string[]}>}
  */
+// eslint-disable-next-line no-unused-vars
 export async function syncExportToBackend(state) {
   // STUB: implement when backend endpoint is ready
   console.warn('[syncService] syncExportToBackend not implemented yet')
@@ -26,6 +25,7 @@ export async function syncExportToBackend(state) {
  * @param {string} flujoId - Backend flujo ID
  * @returns {Promise<Object>} JSON v0.2 shape
  */
+// eslint-disable-next-line no-unused-vars
 export async function syncImportFromBackend(flujoId) {
   // STUB: implement when backend endpoint is ready
   console.warn('[syncService] syncImportFromBackend not implemented yet')

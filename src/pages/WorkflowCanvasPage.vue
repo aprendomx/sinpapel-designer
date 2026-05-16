@@ -101,7 +101,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { VueFlow, MarkerType, useVueFlow } from '@vue-flow/core'
 import EstadoNode from 'src/components/EstadoNode.vue'
@@ -121,7 +121,6 @@ import { useCanvasKeyboard } from 'src/composables/useCanvasKeyboard.js'
 // ── Page logic ───────────────────────────────────────────────────────────────
 
 const route = useRoute()
-const router = useRouter()
 const $q = useQuasar()
 const { screenToFlowCoordinate } = useVueFlow()
 const store = useWorkflowStore()
@@ -314,7 +313,7 @@ function onConnect(params) {
   )
   if (!exists) {
     edges.value = [...edges.value, newEdge]
-    isDirty.value = true
+    store.isDirty = true
   }
 }
 
@@ -322,7 +321,7 @@ function onNodeDragStop({ node }) {
   const idx = nodes.value.findIndex(n => n.id === node.id)
   if (idx !== -1) {
     nodes.value[idx] = { ...nodes.value[idx], position: { ...node.position } }
-    isDirty.value = true
+    store.isDirty = true
   }
 }
 
