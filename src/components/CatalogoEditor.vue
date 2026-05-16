@@ -35,6 +35,19 @@
           </div>
         </q-td>
       </template>
+      <template #body-cell-etapa="props">
+        <q-td :props="props">
+          <q-chip
+            v-if="props.value"
+            dense
+            square
+            color="grey-3"
+            text-color="grey-9"
+            :label="props.value"
+          />
+          <span v-else class="text-grey-6">—</span>
+        </q-td>
+      </template>
     </q-table>
     <CatalogoFormDialog
       v-model="formOpen"
@@ -66,7 +79,7 @@ const rows = computed(() => store.current?.[config.value.storeKey] || [])
 
 const columns = computed(() => {
   const cols = config.value.fields
-    .filter((f) => ['text', 'color', 'number', 'toggle'].includes(f.type))
+    .filter((f) => ['text', 'color', 'number', 'toggle', 'select-etapa'].includes(f.type))
     .map((f) => ({
       name: f.name,
       label: f.label,

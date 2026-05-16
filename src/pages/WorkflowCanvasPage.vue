@@ -5,7 +5,7 @@
     <WorkflowCanvasToolbar
       :flujo="flujo"
       v-model:edit-mode="editMode"
-      :is-dirty="store.isDirty"
+      :is-dirty="isDirty"
       :saving="saving"
       :can-undo="store.canUndo"
       :can-redo="store.canRedo"
@@ -134,6 +134,7 @@ const error = ref(false)
 // Edit mode state
 const editMode = ref(false)
 const saving = ref(false)
+const isDirty = ref(false)
 
 // Panel lateral (edge)
 const selectedEdge = ref(null)
@@ -281,7 +282,7 @@ function onCanvasDrop(event) {
       data: { color: estado.color, icono: estado.icono, estado_id: estado.id },
     },
   ]
-  store.isDirty = true
+  isDirty.value = true
 }
 
 // ── Edit mode events ──────────────────────────────────────────────────────────
@@ -313,7 +314,7 @@ function onConnect(params) {
   )
   if (!exists) {
     edges.value = [...edges.value, newEdge]
-    store.isDirty = true
+    isDirty.value = true
   }
 }
 
@@ -321,7 +322,7 @@ function onNodeDragStop({ node }) {
   const idx = nodes.value.findIndex(n => n.id === node.id)
   if (idx !== -1) {
     nodes.value[idx] = { ...nodes.value[idx], position: { ...node.position } }
-    store.isDirty = true
+    isDirty.value = true
   }
 }
 
@@ -347,14 +348,14 @@ function onEdgeGruposChange(newGrupos) {
   })
   // Keep selectedEdge in sync
   selectedEdge.value = edges.value.find(e => e.id === selectedEdge.value?.id) ?? null
-  store.isDirty = true
+  isDirty.value = true
 }
 
 function eliminarEdge(edge) {
   edges.value = edges.value.filter(e => e.id !== edge.id)
   selectedEdge.value = null
   selectedEdgeGrupos.value = []
-  store.isDirty = true
+  isDirty.value = true
 }
 
 // ── Save / Discard ────────────────────────────────────────────────────────────
@@ -382,7 +383,7 @@ async function saveChanges() {
     // Update snapshot after save
     snapshotNodes = JSON.parse(JSON.stringify(nodes.value))
     snapshotEdges = JSON.parse(JSON.stringify(edges.value))
-    store.isDirty = false
+    isDirty.value = false
     selectedEdge.value = null
 
     // S27.5: trigger download del JSON v0.2 (combined save UX per D5)
@@ -403,7 +404,7 @@ async function saveChanges() {
 function discardChanges() {
   nodes.value = JSON.parse(JSON.stringify(snapshotNodes))
   edges.value = JSON.parse(JSON.stringify(snapshotEdges))
-  store.isDirty = false
+  isDirty.value = false
   selectedEdge.value = null
   selectedEdgeGrupos.value = []
 }
