@@ -11,7 +11,7 @@
           size="sm"
           aria-label="Crear Estado"
           class="wf-states__create-btn"
-          @click="$emit('create')"
+          @click="emit('create')"
         />
       </div>
       <div class="wf-states__filter">

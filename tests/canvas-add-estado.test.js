@@ -10,7 +10,7 @@ describe('WorkflowCanvasStatesPanel — botón crear', () => {
         stubs: {
           QInput: true,
           QIcon: true,
-          QBtn: { template: '<button :aria-label="$attrs[`aria-label`]"><slot/></button>', inheritAttrs: false },
+          QBtn: { template: '<button :aria-label="$attrs[`aria-label`]" @click="$emit(\'click\')"><slot/></button>', inheritAttrs: false, emits: ['click'] },
         },
       },
     })
