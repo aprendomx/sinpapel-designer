@@ -27,17 +27,18 @@ describe('store — bulkReplaceTransiciones con condiciones', () => {
     store.getFlujo = vi.fn().mockResolvedValue(store.current.flujo)
   })
 
-  it('asigna condiciones desde el payload', async () => {
+  it('asigna condiciones desde el payload con shape normalizado completo', async () => {
     await store.bulkReplaceTransiciones('f1', [{
       estado_origen_id: 'eA',
       estado_destino_id: 'eB',
       grupos_ids: [1],
       condiciones: [
-        { tipo: 'json_logic', configuracion: { rule: { '==': [1, 1] } }, mensaje_error: '', orden: 0, activo: true },
+        { tipo: 'json_logic', configuracion: { rule: { '==': [1, 1] } }, mensaje_error: 'falla', orden: 2, activo: false },
       ],
     }])
-    expect(store.current.transiciones[0].condiciones).toHaveLength(1)
-    expect(store.current.transiciones[0].condiciones[0].tipo).toBe('json_logic')
+    expect(store.current.transiciones[0].condiciones).toEqual([
+      { tipo: 'json_logic', configuracion: { rule: { '==': [1, 1] } }, mensaje_error: 'falla', orden: 2, activo: false },
+    ])
   })
 
   it('asigna array vacío si el payload no incluye condiciones', async () => {

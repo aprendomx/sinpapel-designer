@@ -158,6 +158,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         const g = current.value.grupos.find((x) => x.id === gid)
         return g || { id: gid, name: String(gid) }
       }),
+      // Sanitize at the store boundary: apply defaults even though schema-v0_2 already normalizes.
       condiciones: (t.condiciones || []).map((c) => ({
         tipo: c.tipo,
         configuracion: c.configuracion ?? {},
