@@ -158,6 +158,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
         const g = current.value.grupos.find((x) => x.id === gid)
         return g || { id: gid, name: String(gid) }
       }),
+      condiciones: (t.condiciones || []).map((c) => ({
+        tipo: c.tipo,
+        configuracion: c.configuracion ?? {},
+        mensaje_error: c.mensaje_error ?? '',
+        orden: c.orden ?? 0,
+        activo: c.activo ?? true,
+      })),
     }))
     _markDirty()
   }
