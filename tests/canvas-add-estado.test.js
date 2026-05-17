@@ -150,10 +150,11 @@ describe('CatalogoFormDialog — manejo de error en save', () => {
             emits: ['update:modelValue'],
           },
           QToggle: { template: '<input type="checkbox"/>', props: ['modelValue'] },
-          QSelect: { template: '<select/>', props: ['modelValue'] },
+          QSelect: { template: '<select/>', props: ['modelValue', 'options'] },
           QBtn: { template: '<button :type="type" @click="$emit(\'click\')"><slot/></button>', props: ['type'], emits: ['click'] },
         },
-        mocks: { $q: { notify: notifyMock } },
+        // Note: useQuasar() is patched via vi.doMock('quasar', ...) above —
+        // the Options-API `mocks: { $q }` path does not reach the composable.
       },
     })
 
