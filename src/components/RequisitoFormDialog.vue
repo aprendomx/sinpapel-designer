@@ -45,6 +45,9 @@ const props = defineProps({
   editing: { type: Object, default: null },
   estadoNombre: { type: String, required: true },
 })
+// 'saved' is emitted (no payload) for parent hooks like scroll/focus.
+// Persistence happens via store autosave; parents that just re-render
+// reactively from getRequisitosForEstado can ignore 'saved'.
 const emit = defineEmits(['update:modelValue', 'saved'])
 
 const store = useWorkflowStore()

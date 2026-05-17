@@ -167,7 +167,7 @@ Al guardar: emitir `saved` con el objeto condición. El padre (`WorkflowCanvasTr
 
 #### `RequisitoFormDialog.vue`
 
-Props: `modelValue`, `editing`, `estadoId`.
+Props: `modelValue`, `editing`, `estadoNombre` (string, nombre del estado destino — coincide con cómo el store identifica requisitos por D7).
 
 Campos:
 - `tipo_documento` — `q-select` con opciones de `store.current.tipos_documento` (label = `nombre`, value = `id`).
