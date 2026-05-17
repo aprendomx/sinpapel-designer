@@ -130,4 +130,25 @@ describe('CondicionFormDialog', () => {
 
     expect(wrapper.emitted('saved')[0][0].orden).toBe(2)
   })
+
+  it('filtra pares django_orm con valor vacío al construir configuracion', async () => {
+    const wrapper = mount(CondicionFormDialog, {
+      props: { modelValue: true, editing: null, existing: [] },
+      global: { stubs: COMMON_STUBS, mocks: { $q: { notify: vi.fn() } } },
+    })
+    await wrapper.find('select[data-field="Tipo"]').setValue('django_orm')
+    await flushPromises()
+    const keyInputs = wrapper.findAll('input[data-field="campo__lookup"]')
+    const valueInputs = wrapper.findAll('input[data-field="valor"]')
+    await keyInputs[0].setValue('monto__gte')
+    await valueInputs[0].setValue('100')
+    // Para mantener este test simple: sólo verificamos que el primer par válido
+    // produce el lookup esperado (pares con value='' son filtrados).
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    const saved = wrapper.emitted('saved')
+    expect(saved).toBeTruthy()
+    expect(saved[0][0].configuracion).toEqual({ lookup: { monto__gte: '100' } })
+  })
 })

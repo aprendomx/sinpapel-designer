@@ -103,6 +103,8 @@ const isEdit = computed(() => !!props.editing)
 
 const form = ref(emptyForm())
 
+// Factory (not a module-level constant) so each call returns a fresh
+// lookupPairs array — avoids shared-reference bugs across dialog opens.
 function emptyForm() {
   return {
     tipo: '',
@@ -143,6 +145,7 @@ function addPair() {
 
 function removePair(idx) {
   form.value.lookupPairs.splice(idx, 1)
+  // Keep at least one empty pair visible so the section never collapses.
   if (form.value.lookupPairs.length === 0) addPair()
 }
 
@@ -156,7 +159,9 @@ function buildConfiguracion() {
   if (form.value.tipo === 'django_orm') {
     const lookup = {}
     for (const p of form.value.lookupPairs) {
-      if (p.key) lookup[p.key] = p.value
+      // Filter out pairs missing key OR value; empty-string queries are rare
+      // and almost always indicate an incomplete edit in v1 UX.
+      if (p.key && p.value !== '') lookup[p.key] = p.value
     }
     return { lookup }
   }
@@ -169,7 +174,7 @@ function onSave() {
   try {
     configuracion = buildConfiguracion()
   } catch (e) {
-    $q.notify({
+    $q?.notify({
       type: 'negative',
       message: `JSON inválido: ${e.message}`,
       position: 'top',
