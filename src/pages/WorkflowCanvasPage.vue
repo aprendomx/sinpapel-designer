@@ -255,9 +255,14 @@ async function loadFlujo() {
 
 onMounted(async () => {
   await loadFlujo()
-  const [grupos] = await Promise.allSettled([store.getGrupos()])
+  const [grupos, estatuses] = await Promise.allSettled([
+    store.getGrupos(),
+    store.getEstatuses(),
+  ])
   if (grupos.status === 'fulfilled') gruposOptions.value = grupos.value
-  await reloadEstatuses()
+  if (estatuses.status === 'fulfilled') {
+    todosEstatuses.value = (estatuses.value ?? []).filter(e => e.activo !== false)
+  }
 })
 
 // ── Sidebar drag-and-drop ─────────────────────────────────────────────────────
