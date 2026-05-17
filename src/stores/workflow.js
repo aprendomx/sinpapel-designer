@@ -425,6 +425,65 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return { requisitos }
   }
 
+  // ── S27.8 — CRUD requisitos por estado destino ───────────────────────
+
+  function _assertUniqueRequisito(estadoNombre, tipoDocNombre, exclude = false) {
+    const dup = current.value.requisitos.some(
+      (r) => r.estado === estadoNombre && r.tipo_documento === tipoDocNombre,
+    )
+    if (dup && !exclude) {
+      throw new Error(
+        `Requisito ya existe: ${tipoDocNombre} para estado ${estadoNombre}`,
+      )
+    }
+  }
+
+  function addRequisito(estadoNombre, data) {
+    if (!current.value) return null
+    _assertUniqueRequisito(estadoNombre, data.tipo_documento)
+    const entry = {
+      estado: estadoNombre,
+      tipo_documento: data.tipo_documento,
+      porcentaje: data.porcentaje ?? 100,
+      auto_carga: data.auto_carga ?? false,
+    }
+    current.value.requisitos.push(entry)
+    _markDirty()
+    return entry
+  }
+
+  function updateRequisito(estadoNombre, tipoDocNombre, patch) {
+    if (!current.value) return null
+    const idx = current.value.requisitos.findIndex(
+      (r) => r.estado === estadoNombre && r.tipo_documento === tipoDocNombre,
+    )
+    if (idx === -1) return null
+    current.value.requisitos[idx] = {
+      ...current.value.requisitos[idx],
+      ...patch,
+      estado: estadoNombre,
+      tipo_documento: patch.tipo_documento ?? tipoDocNombre,
+    }
+    _markDirty()
+    return current.value.requisitos[idx]
+  }
+
+  function removeRequisito(estadoNombre, tipoDocNombre) {
+    if (!current.value) return false
+    const before = current.value.requisitos.length
+    current.value.requisitos = current.value.requisitos.filter(
+      (r) => !(r.estado === estadoNombre && r.tipo_documento === tipoDocNombre),
+    )
+    const removed = current.value.requisitos.length < before
+    if (removed) _markDirty()
+    return removed
+  }
+
+  function getRequisitosForEstado(estadoNombre) {
+    if (!current.value) return []
+    return current.value.requisitos.filter((r) => r.estado === estadoNombre)
+  }
+
   // ── Internal helpers ─────────────────────────────────────────────────
 
   function _clone(o) {
@@ -552,6 +611,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     addEtapa, updateEtapa, removeEtapa,
     addGrupo, updateGrupo, removeGrupo,
     addTipoDocumento, updateTipoDocumento, removeTipoDocumento,
+    addRequisito, updateRequisito, removeRequisito, getRequisitosForEstado,
     findEstadoReferences, findEtapaReferences,
     findGrupoReferences, findTipoDocumentoReferences,
   }
