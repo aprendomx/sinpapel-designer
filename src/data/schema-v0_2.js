@@ -145,13 +145,24 @@ function _serializeTipoDocumento(t) {
 }
 
 function _serializeTransicion(t) {
-  return {
+  const out = {
     estado_origen: t.estado_origen?.nombre || t.estado_origen,
     estado_destino: t.estado_destino?.nombre || t.estado_destino,
     grupos_permitidos: (t.grupos_permitidos || [])
       .map((g) => g.name || g)
       .sort(),
   }
+  const condiciones = (t.condiciones || []).map((c) => ({
+    tipo: c.tipo,
+    configuracion: c.configuracion ?? {},
+    mensaje_error: c.mensaje_error ?? '',
+    orden: c.orden ?? 0,
+    activo: c.activo ?? true,
+  }))
+  if (condiciones.length > 0) {
+    out.condiciones = condiciones
+  }
+  return out
 }
 
 function _serializeRequisito(r) {
@@ -230,6 +241,13 @@ function _deserializeTransicion(t, idx, estados, gruposJson) {
     grupos_permitidos: (t.grupos_permitidos || []).map(
       (name) => grupoLookup[name] || { id: 0, name }
     ),
+    condiciones: (t.condiciones || []).map((c) => ({
+      tipo: c.tipo,
+      configuracion: c.configuracion ?? {},
+      mensaje_error: c.mensaje_error ?? '',
+      orden: c.orden ?? 0,
+      activo: c.activo ?? true,
+    })),
   }
 }
 
