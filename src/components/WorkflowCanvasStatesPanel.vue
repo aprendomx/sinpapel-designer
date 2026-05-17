@@ -4,6 +4,15 @@
       <div class="wf-states__header">
         <q-icon name="widgets" size="14px" style="color: rgba(255,255,255,0.6)" />
         <span>Estados</span>
+        <q-space />
+        <q-btn
+          flat dense round
+          icon="add"
+          size="sm"
+          aria-label="Crear Estado"
+          class="wf-states__create-btn"
+          @click="$emit('create')"
+        />
       </div>
       <div class="wf-states__filter">
         <q-input
@@ -75,7 +84,7 @@ const props = defineProps({
   editMode: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['drag-start'])
+const emit = defineEmits(['drag-start', 'create'])
 
 const filtro = ref('')
 
@@ -265,5 +274,13 @@ function onDragStart(event, estado) {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.4);
   text-align: center;
+}
+
+.wf-states__create-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.wf-states__create-btn:hover {
+  color: #fff !important;
 }
 </style>
