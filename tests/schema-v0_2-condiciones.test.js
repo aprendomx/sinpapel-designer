@@ -97,4 +97,42 @@ describe('schema v0.2 — condiciones round-trip', () => {
     expect(parsed.transiciones[0].condiciones[0].tipo).toBe('futuro_tipo')
     expect(parsed.transiciones[0].condiciones[0].configuracion).toEqual({ foo: 'bar' })
   })
+
+  it('preserva activo: false en round-trip', () => {
+    const state = {
+      ...baseState,
+      transiciones: [{
+        id: 1,
+        estado_origen: baseState.estados[0],
+        estado_destino: baseState.estados[1],
+        grupos_permitidos: [],
+        condiciones: [
+          { tipo: 'json_logic', configuracion: { rule: true }, mensaje_error: 'msg', orden: 0, activo: false },
+        ],
+      }],
+    }
+    const json = serializeV0_2(state)
+    expect(json.flujo.transiciones[0].condiciones[0].activo).toBe(false)
+    const parsed = parseV0_2(json)
+    expect(parsed.transiciones[0].condiciones[0].activo).toBe(false)
+  })
+
+  it('preserva mensaje_error vacío ("") en serialize y parse', () => {
+    const state = {
+      ...baseState,
+      transiciones: [{
+        id: 1,
+        estado_origen: baseState.estados[0],
+        estado_destino: baseState.estados[1],
+        grupos_permitidos: [],
+        condiciones: [
+          { tipo: 'json_logic', configuracion: { rule: true }, mensaje_error: '', orden: 0, activo: true },
+        ],
+      }],
+    }
+    const json = serializeV0_2(state)
+    expect(json.flujo.transiciones[0].condiciones[0].mensaje_error).toBe('')
+    const parsed = parseV0_2(json)
+    expect(parsed.transiciones[0].condiciones[0].mensaje_error).toBe('')
+  })
 })
