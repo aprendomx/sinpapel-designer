@@ -66,4 +66,23 @@ describe('store — CRUD requisitos', () => {
     expect(store.getRequisitosForEstado('B')).toHaveLength(1)
     expect(store.getRequisitosForEstado('NOPE')).toHaveLength(0)
   })
+
+  it('updateRequisito retorna null si el (estado, tipo_documento) no existe', () => {
+    expect(store.updateRequisito('A', 'NOPE', { porcentaje: 50 })).toBeNull()
+  })
+
+  it('removeRequisito retorna false si el (estado, tipo_documento) no existe', () => {
+    expect(store.removeRequisito('A', 'NOPE')).toBe(false)
+  })
+
+  it('updateRequisito lanza si patch.tipo_documento causa duplicado', () => {
+    store.addRequisito('A', { tipo_documento: 'DNI', porcentaje: 100, auto_carga: false })
+    store.addRequisito('A', { tipo_documento: 'FACTURA', porcentaje: 100, auto_carga: false })
+    expect(() => store.updateRequisito('A', 'DNI', { tipo_documento: 'FACTURA' })).toThrow(/ya existe/)
+  })
+
+  it('addRequisito retorna null si data.tipo_documento es undefined', () => {
+    expect(store.addRequisito('A', { porcentaje: 100 })).toBeNull()
+    expect(store.getRequisitosForEstado('A')).toHaveLength(0)
+  })
 })

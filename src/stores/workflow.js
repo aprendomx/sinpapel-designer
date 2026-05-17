@@ -427,11 +427,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   // ── S27.8 — CRUD requisitos por estado destino ───────────────────────
 
-  function _assertUniqueRequisito(estadoNombre, tipoDocNombre, exclude = false) {
+  function _assertUniqueRequisito(estadoNombre, tipoDocNombre) {
     const dup = current.value.requisitos.some(
       (r) => r.estado === estadoNombre && r.tipo_documento === tipoDocNombre,
     )
-    if (dup && !exclude) {
+    if (dup) {
       throw new Error(
         `Requisito ya existe: ${tipoDocNombre} para estado ${estadoNombre}`,
       )
@@ -440,6 +440,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   function addRequisito(estadoNombre, data) {
     if (!current.value) return null
+    if (!data.tipo_documento) return null
     _assertUniqueRequisito(estadoNombre, data.tipo_documento)
     const entry = {
       estado: estadoNombre,
@@ -458,11 +459,23 @@ export const useWorkflowStore = defineStore('workflow', () => {
       (r) => r.estado === estadoNombre && r.tipo_documento === tipoDocNombre,
     )
     if (idx === -1) return null
+    const newTipoDoc = patch.tipo_documento ?? tipoDocNombre
+    if (newTipoDoc !== tipoDocNombre) {
+      // Rename: ensure no other requisito uses (estadoNombre, newTipoDoc)
+      const conflict = current.value.requisitos.some(
+        (r, i) => i !== idx && r.estado === estadoNombre && r.tipo_documento === newTipoDoc,
+      )
+      if (conflict) {
+        throw new Error(
+          `Requisito ya existe: ${newTipoDoc} para estado ${estadoNombre}`,
+        )
+      }
+    }
     current.value.requisitos[idx] = {
       ...current.value.requisitos[idx],
       ...patch,
       estado: estadoNombre,
-      tipo_documento: patch.tipo_documento ?? tipoDocNombre,
+      tipo_documento: newTipoDoc,
     }
     _markDirty()
     return current.value.requisitos[idx]
