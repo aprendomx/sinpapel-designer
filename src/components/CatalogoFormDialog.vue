@@ -63,6 +63,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useQuasar } from 'quasar'
 import { useWorkflowStore } from 'src/stores/workflow.js'
 import { CATALOGO_CONFIGS, defaultsFor } from 'src/data/catalogo-fields.js'
 
@@ -74,6 +75,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved'])
 
 const store = useWorkflowStore()
+const $q = useQuasar()
 const config = computed(() => CATALOGO_CONFIGS[props.catalogKey])
 const isEdit = computed(() => !!props.editing)
 
@@ -104,12 +106,20 @@ function onSave() {
   const cfg = config.value
   const nameField = cfg.nameField
   if (!form.value[nameField]) return
-  if (isEdit.value) {
-    store[cfg.updateAction](props.editing.id, { ...form.value })
-  } else {
-    store[cfg.addAction]({ ...form.value })
+  try {
+    if (isEdit.value) {
+      store[cfg.updateAction](props.editing.id, { ...form.value })
+    } else {
+      store[cfg.addAction]({ ...form.value })
+    }
+    emit('saved')
+    emit('update:modelValue', false)
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: e?.message || `No se pudo guardar el ${cfg.label}`,
+      position: 'top',
+    })
   }
-  emit('saved')
-  emit('update:modelValue', false)
 }
 </script>

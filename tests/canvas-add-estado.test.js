@@ -113,3 +113,62 @@ describe('WorkflowCanvasPage — crear Estado desde panel', () => {
     expect(getEstatusesMock).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('CatalogoFormDialog — manejo de error en save', () => {
+  it('muestra notify negativo y mantiene el diálogo abierto si addAction lanza', async () => {
+    const notifyMock = vi.fn()
+    const addEstadoMock = vi.fn(() => { throw new Error('estado con nombre=Foo ya existe') })
+
+    vi.resetModules()
+    vi.doMock('src/stores/workflow.js', () => ({
+      useWorkflowStore: () => ({
+        current: { etapas: [] },
+        addEstado: addEstadoMock,
+      }),
+    }))
+    vi.doMock('quasar', async () => {
+      const actual = await vi.importActual('quasar')
+      return { ...actual, useQuasar: () => ({ notify: notifyMock }) }
+    })
+
+    const { default: CatalogoFormDialog } = await import('../src/components/CatalogoFormDialog.vue')
+
+    const wrapper = mount(CatalogoFormDialog, {
+      props: { modelValue: true, catalogKey: 'estados', editing: null },
+      global: {
+        stubs: {
+          QDialog: { template: '<div><slot/></div>', props: ['modelValue'] },
+          QCard: { template: '<div><slot/></div>' },
+          QCardSection: { template: '<div><slot/></div>' },
+          QForm: {
+            template: '<form @submit.prevent="$emit(\'submit\', $event)"><slot/></form>',
+            emits: ['submit'],
+          },
+          QInput: {
+            template: '<input :data-field="label" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)"/>',
+            props: ['modelValue', 'label'],
+            emits: ['update:modelValue'],
+          },
+          QToggle: { template: '<input type="checkbox"/>', props: ['modelValue'] },
+          QSelect: { template: '<select/>', props: ['modelValue'] },
+          QBtn: { template: '<button :type="type" @click="$emit(\'click\')"><slot/></button>', props: ['type'], emits: ['click'] },
+        },
+        mocks: { $q: { notify: notifyMock } },
+      },
+    })
+
+    // Llenar el campo Nombre vía el stub de QInput (pasa la guarda `if (!form[nameField]) return`)
+    await wrapper.find('input[data-field="Nombre"]').setValue('Foo')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(addEstadoMock).toHaveBeenCalled()
+    expect(notifyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'negative' })
+    )
+    // El diálogo NO se cerró (update:modelValue=false no se emitió)
+    const closeEmits = (wrapper.emitted('update:modelValue') || [])
+      .filter(args => args[0] === false)
+    expect(closeEmits).toHaveLength(0)
+  })
+})
