@@ -36,6 +36,7 @@
         :ids-en-canvas="idsEnCanvas"
         :edit-mode="editMode"
         @drag-start="onSidebarDragStart"
+        @create="createEstadoDialogOpen = true"
       />
 
       <!-- Canvas -->
@@ -96,6 +97,13 @@
       />
 
     </div>
+
+    <CatalogoFormDialog
+      v-model="createEstadoDialogOpen"
+      catalog-key="estados"
+      :editing="null"
+      @saved="reloadEstatuses"
+    />
   </q-page>
 </template>
 
@@ -116,6 +124,7 @@ import { useWorkflowStore } from 'src/stores/workflow.js'
 import WorkflowCanvasToolbar from 'src/components/WorkflowCanvasToolbar.vue'
 import WorkflowCanvasStatesPanel from 'src/components/WorkflowCanvasStatesPanel.vue'
 import WorkflowCanvasTransitionPanel from 'src/components/WorkflowCanvasTransitionPanel.vue'
+import CatalogoFormDialog from 'src/components/CatalogoFormDialog.vue'
 import { useCanvasKeyboard } from 'src/composables/useCanvasKeyboard.js'
 
 // ── Page logic ───────────────────────────────────────────────────────────────
@@ -135,6 +144,7 @@ const error = ref(false)
 const editMode = ref(false)
 const saving = ref(false)
 const isDirty = ref(false)
+const createEstadoDialogOpen = ref(false)
 
 // Panel lateral (edge)
 const selectedEdge = ref(null)
@@ -170,6 +180,11 @@ useCanvasKeyboard({
 
 function miniMapColor(node) {
   return node.data?.color || '#9b2247'
+}
+
+async function reloadEstatuses() {
+  const result = await store.getEstatuses()
+  todosEstatuses.value = (result ?? []).filter(e => e.activo !== false)
 }
 
 // ── Load ─────────────────────────────────────────────────────────────────────
@@ -240,15 +255,9 @@ async function loadFlujo() {
 
 onMounted(async () => {
   await loadFlujo()
-  // Load grupos and all estatuses in parallel
-  const [grupos, estatuses] = await Promise.allSettled([
-    store.getGrupos(),
-    store.getEstatuses(),
-  ])
+  const [grupos] = await Promise.allSettled([store.getGrupos()])
   if (grupos.status === 'fulfilled') gruposOptions.value = grupos.value
-  if (estatuses.status === 'fulfilled') {
-    todosEstatuses.value = (estatuses.value ?? []).filter(e => e.activo !== false)
-  }
+  await reloadEstatuses()
 })
 
 // ── Sidebar drag-and-drop ─────────────────────────────────────────────────────
