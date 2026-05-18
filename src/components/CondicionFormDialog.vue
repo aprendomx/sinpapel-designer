@@ -165,7 +165,9 @@ function buildConfiguracion() {
     }
     return { lookup }
   }
-  return {}
+  // Forward-compat: tipos desconocidos (futuro backend) preservan la
+  // configuracion original sin alterarla.
+  return props.editing?.configuracion ?? {}
 }
 
 function onSave() {

@@ -131,6 +131,35 @@ describe('CondicionFormDialog', () => {
     expect(wrapper.emitted('saved')[0][0].orden).toBe(2)
   })
 
+  it('preserva configuracion original cuando el tipo es desconocido (forward-compat)', async () => {
+    const wrapper = mount(CondicionFormDialog, {
+      props: {
+        modelValue: true,
+        editing: {
+          tipo: 'futuro_tipo',
+          configuracion: { foo: 'bar', nested: { x: 1 } },
+          mensaje_error: 'antes',
+          orden: 0,
+          activo: true,
+        },
+        existing: [],
+      },
+      global: { stubs: COMMON_STUBS, mocks: { $q: { notify: vi.fn() } } },
+    })
+    await flushPromises()
+    await wrapper.find('input[data-field="Mensaje de error"]').setValue('después')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    const saved = wrapper.emitted('saved')
+    expect(saved).toBeTruthy()
+    expect(saved[0][0]).toMatchObject({
+      tipo: 'futuro_tipo',
+      configuracion: { foo: 'bar', nested: { x: 1 } },
+      mensaje_error: 'después',
+    })
+  })
+
   it('filtra pares django_orm con valor vacío al construir configuracion', async () => {
     const wrapper = mount(CondicionFormDialog, {
       props: { modelValue: true, editing: null, existing: [] },
