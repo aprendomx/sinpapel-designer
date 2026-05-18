@@ -9,7 +9,10 @@ const STORAGE_KEY = 'sinpapel-designer/ai-settings'
 const DEFAULT_MODELS = {
   anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-5',
+  opencode: 'anthropic/claude-sonnet-4-6',
 }
+
+const DEFAULT_OPENCODE_URL = 'http://localhost:4096'
 
 function loadFromStorage() {
   try {
@@ -26,7 +29,12 @@ export const useAiSettingsStore = defineStore('aiSettings', () => {
 
   const provider = ref(stored?.provider || 'anthropic')
   const model = ref(stored?.model || DEFAULT_MODELS[provider.value])
-  const apiKeys = ref(stored?.apiKeys || { anthropic: '', openai: '' })
+  const apiKeys = ref({
+    anthropic: stored?.apiKeys?.anthropic || '',
+    openai: stored?.apiKeys?.openai || '',
+    opencode: stored?.apiKeys?.opencode || '',
+  })
+  const opencodeUrl = ref(stored?.opencodeUrl || DEFAULT_OPENCODE_URL)
 
   function persist() {
     try {
@@ -36,6 +44,7 @@ export const useAiSettingsStore = defineStore('aiSettings', () => {
           provider: provider.value,
           model: model.value,
           apiKeys: apiKeys.value,
+          opencodeUrl: opencodeUrl.value,
         }),
       )
     } catch {
@@ -59,7 +68,16 @@ export const useAiSettingsStore = defineStore('aiSettings', () => {
     persist()
   }
 
+  function setOpencodeUrl(url) {
+    opencodeUrl.value = url
+    persist()
+  }
+
   function hasApiKey() {
+    // Para opencode, la "key" (password) es opcional — el provider funciona sin auth.
+    // Tener el provider seleccionado es suficiente; el hasApiKey() de los demás sigue
+    // requiriendo string no vacío.
+    if (provider.value === 'opencode') return true
     return Boolean(apiKeys.value[provider.value])
   }
 
@@ -73,8 +91,8 @@ export const useAiSettingsStore = defineStore('aiSettings', () => {
   // no resetea model al default del nuevo provider).
 
   return {
-    provider, model, apiKeys,
-    setProvider, setModel, setApiKey,
+    provider, model, apiKeys, opencodeUrl,
+    setProvider, setModel, setApiKey, setOpencodeUrl,
     hasApiKey, currentApiKey,
   }
 })

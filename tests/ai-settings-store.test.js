@@ -26,7 +26,7 @@ describe('aiSettings store', () => {
     const store = useAiSettingsStore()
     expect(store.provider).toBe('anthropic')
     expect(store.model).toBe('claude-sonnet-4-6')
-    expect(store.apiKeys).toEqual({ anthropic: '', openai: '' })
+    expect(store.apiKeys).toEqual({ anthropic: '', openai: '', opencode: '' })
   })
 
   it('setApiKey actualiza por provider y persiste a localStorage', () => {
@@ -68,5 +68,42 @@ describe('aiSettings store', () => {
     expect(store.provider).toBe('openai')
     expect(store.model).toBe('gpt-4-turbo')
     expect(store.apiKeys.openai).toBe('oai-y')
+  })
+
+  it('setProvider opencode usa default anthropic/claude-sonnet-4-6', () => {
+    const store = useAiSettingsStore()
+    store.setProvider('opencode')
+    expect(store.provider).toBe('opencode')
+    expect(store.model).toBe('anthropic/claude-sonnet-4-6')
+  })
+
+  it('apiKeys.opencode existe por default vacío', () => {
+    const store = useAiSettingsStore()
+    expect(store.apiKeys.opencode).toBe('')
+    store.setApiKey('opencode', 'mypassword')
+    expect(store.apiKeys.opencode).toBe('mypassword')
+  })
+
+  it('opencodeUrl default es http://localhost:4096 y setOpencodeUrl persiste', () => {
+    const store = useAiSettingsStore()
+    expect(store.opencodeUrl).toBe('http://localhost:4096')
+    store.setOpencodeUrl('http://opencode.lan:9000')
+    expect(store.opencodeUrl).toBe('http://opencode.lan:9000')
+    const raw = localStorage.getItem('sinpapel-designer/ai-settings')
+    expect(JSON.parse(raw).opencodeUrl).toBe('http://opencode.lan:9000')
+  })
+
+  it('rehidrata opencodeUrl y apiKeys.opencode desde localStorage', () => {
+    localStorage.setItem('sinpapel-designer/ai-settings', JSON.stringify({
+      provider: 'opencode',
+      model: 'anthropic/claude-opus-4-7',
+      apiKeys: { anthropic: '', openai: '', opencode: 'pw' },
+      opencodeUrl: 'http://other:5000',
+    }))
+    const store = useAiSettingsStore()
+    expect(store.provider).toBe('opencode')
+    expect(store.opencodeUrl).toBe('http://other:5000')
+    expect(store.apiKeys.opencode).toBe('pw')
+    expect(store.currentApiKey()).toBe('pw')
   })
 })
