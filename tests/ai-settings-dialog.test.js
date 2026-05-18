@@ -66,4 +66,41 @@ describe('AiSettingsDialog', () => {
     const closeEmits = (wrapper.emitted('update:modelValue') || []).filter(a => a[0] === false)
     expect(closeEmits.length).toBeGreaterThan(0)
   })
+
+  it('cuando provider=opencode muestra inputs URL y password', async () => {
+    const AiSettingsDialog = (await import('../src/components/AiSettingsDialog.vue')).default
+
+    const wrapper = mount(AiSettingsDialog, {
+      props: { modelValue: true },
+      global: { stubs: COMMON_STUBS },
+    })
+
+    await wrapper.find('select[data-field="Provider"]').setValue('opencode')
+    await flushPromises()
+
+    expect(wrapper.find('input[data-field="URL del servidor OpenCode"]').exists()).toBe(true)
+    expect(wrapper.find('input[data-field="Password OpenCode (opcional)"]').exists()).toBe(true)
+  })
+
+  it('Guardar con provider=opencode persiste opencodeUrl y password al store', async () => {
+    const AiSettingsDialog = (await import('../src/components/AiSettingsDialog.vue')).default
+    const { useAiSettingsStore } = await import('../src/stores/aiSettings.js')
+
+    const wrapper = mount(AiSettingsDialog, {
+      props: { modelValue: true },
+      global: { stubs: COMMON_STUBS },
+    })
+
+    await wrapper.find('select[data-field="Provider"]').setValue('opencode')
+    await flushPromises()
+    await wrapper.find('input[data-field="URL del servidor OpenCode"]').setValue('http://opencode.lan:5000')
+    await wrapper.find('input[data-field="Password OpenCode (opcional)"]').setValue('pw123')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    const store = useAiSettingsStore()
+    expect(store.provider).toBe('opencode')
+    expect(store.opencodeUrl).toBe('http://opencode.lan:5000')
+    expect(store.apiKeys.opencode).toBe('pw123')
+  })
 })

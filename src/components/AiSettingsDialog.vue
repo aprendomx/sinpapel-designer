@@ -46,6 +46,31 @@
               <q-btn flat dense round :icon="showOpenai ? 'visibility_off' : 'visibility'" @click="showOpenai = !showOpenai" />
             </template>
           </q-input>
+
+          <!-- Campos extra cuando provider=opencode -->
+          <template v-if="form.provider === 'opencode'">
+            <q-input
+              v-model="form.opencodeUrl"
+              label="URL del servidor OpenCode"
+              placeholder="http://localhost:4096"
+              dense
+            />
+            <q-input
+              v-model="form.apiKeys.opencode"
+              label="Password OpenCode (opcional)"
+              :type="showOpencode ? 'text' : 'password'"
+              dense
+            >
+              <template #append>
+                <q-btn flat dense round :icon="showOpencode ? 'visibility_off' : 'visibility'" @click="showOpencode = !showOpencode" />
+              </template>
+            </q-input>
+            <div class="text-caption text-grey-7">
+              OpenCode debe estar corriendo con <code>opencode serve --cors</code>.
+              Si configuraste <code>OPENCODE_SERVER_PASSWORD</code>, ponlo en el campo Password.
+            </div>
+          </template>
+
           <div class="row q-gutter-sm justify-end">
             <q-btn flat label="Cancelar" v-close-popup />
             <q-btn color="primary" label="Guardar" type="submit" />
@@ -63,6 +88,7 @@ import { useAiSettingsStore } from 'src/stores/aiSettings.js'
 const PROVIDER_OPTIONS = [
   { label: 'Anthropic', value: 'anthropic' },
   { label: 'OpenAI', value: 'openai' },
+  { label: 'OpenCode', value: 'opencode' },
 ]
 
 const MODEL_OPTIONS = {
@@ -74,6 +100,11 @@ const MODEL_OPTIONS = {
   openai: [
     { label: 'GPT-5', value: 'gpt-5' },
     { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' },
+  ],
+  opencode: [
+    { label: 'Anthropic / Claude Sonnet 4.6', value: 'anthropic/claude-sonnet-4-6' },
+    { label: 'Anthropic / Claude Opus 4.7', value: 'anthropic/claude-opus-4-7' },
+    { label: 'OpenAI / GPT-5', value: 'openai/gpt-5' },
   ],
 }
 
@@ -91,11 +122,13 @@ const open = computed({
 
 const showAnthropic = ref(false)
 const showOpenai = ref(false)
+const showOpencode = ref(false)
 
 const form = ref({
   provider: store.provider,
   model: store.model,
   apiKeys: { ...store.apiKeys },
+  opencodeUrl: store.opencodeUrl,
 })
 
 const modelOptionsForProvider = computed(() => MODEL_OPTIONS[form.value.provider] || [])
@@ -108,6 +141,7 @@ watch(
         provider: store.provider,
         model: store.model,
         apiKeys: { ...store.apiKeys },
+        opencodeUrl: store.opencodeUrl,
       }
     }
   },
@@ -128,6 +162,8 @@ function onSave() {
   store.setModel(form.value.model)
   store.setApiKey('anthropic', form.value.apiKeys.anthropic)
   store.setApiKey('openai', form.value.apiKeys.openai)
+  store.setApiKey('opencode', form.value.apiKeys.opencode || '')
+  store.setOpencodeUrl(form.value.opencodeUrl)
   emit('update:modelValue', false)
 }
 </script>
