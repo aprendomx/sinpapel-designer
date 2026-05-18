@@ -5,7 +5,7 @@ const STUBS = {
   QIcon: true,
   QSelect: true,
   QChip: { template: '<span class="q-chip"><slot/></span>' },
-  QBtn: { template: '<button :aria-label="$attrs[`aria-label`]" @click="$emit(\'click\')"><slot/></button>', inheritAttrs: false, emits: ['click'] },
+  QBtn: { template: '<button :aria-label="$attrs[`aria-label`]" @click="$emit(\'click\', $event)"><slot/></button>', inheritAttrs: false, emits: ['click'] },
   QToggle: true,
   CondicionFormDialog: {
     name: 'CondicionFormDialog',
@@ -107,5 +107,73 @@ describe('WorkflowCanvasTransitionPanel — reglas', () => {
     await flushPromises()
     expect(getMock).toHaveBeenCalledWith('B')
     expect(wrapper.text()).toContain('DNI')
+  })
+
+  it('emite condiciones-change al eliminar una condición', async () => {
+    vi.resetModules()
+    vi.doMock('src/stores/workflow.js', () => ({
+      useWorkflowStore: () => ({ current: { tipos_documento: [] }, getRequisitosForEstado: () => [] }),
+    }))
+    const { default: Panel } = await import('../src/components/WorkflowCanvasTransitionPanel.vue')
+    const edge = makeEdge({
+      condiciones: [
+        { tipo: 'python_path', configuracion: { path: 'a' }, mensaje_error: 'm1', orden: 0, activo: true },
+        { tipo: 'json_logic', configuracion: { rule: true }, mensaje_error: 'm2', orden: 1, activo: true },
+      ],
+    })
+    const wrapper = mount(Panel, {
+      props: { selectedEdge: edge, gruposOptions: [], editMode: true },
+      global: { stubs: STUBS },
+    })
+    // close buttons are aria-less inside rows; find by index
+    const closeButtons = wrapper.findAll('.wf-panel__row button')
+    await closeButtons[0].trigger('click')
+    const emitted = wrapper.emitted('condiciones-change')
+    expect(emitted).toBeTruthy()
+    expect(emitted[0][0]).toHaveLength(1)
+    expect(emitted[0][0][0].mensaje_error).toBe('m2')
+  })
+
+  it('emite condiciones-change al editar una condición existente (replace en el mismo índice)', async () => {
+    vi.resetModules()
+    vi.doMock('src/stores/workflow.js', () => ({
+      useWorkflowStore: () => ({ current: { tipos_documento: [] }, getRequisitosForEstado: () => [] }),
+    }))
+    const { default: Panel } = await import('../src/components/WorkflowCanvasTransitionPanel.vue')
+    const edge = makeEdge({
+      condiciones: [
+        { tipo: 'python_path', configuracion: { path: 'a' }, mensaje_error: 'orig', orden: 0, activo: true },
+      ],
+    })
+    const wrapper = mount(Panel, {
+      props: { selectedEdge: edge, gruposOptions: [], editMode: true },
+      global: { stubs: STUBS },
+    })
+    // open dialog by clicking the row
+    await wrapper.find('.wf-panel__row').trigger('click')
+    await flushPromises()
+    const updated = { tipo: 'python_path', configuracion: { path: 'a' }, mensaje_error: 'editado', orden: 0, activo: true }
+    wrapper.findComponent({ name: 'CondicionFormDialog' }).vm.$emit('saved', updated)
+    await flushPromises()
+    const emitted = wrapper.emitted('condiciones-change')
+    expect(emitted).toBeTruthy()
+    expect(emitted[0][0]).toHaveLength(1)
+    expect(emitted[0][0][0].mensaje_error).toBe('editado')
+  })
+
+  it('renderiza empty state de requisitos cuando getRequisitosForEstado retorna []', async () => {
+    vi.resetModules()
+    vi.doMock('src/stores/workflow.js', () => ({
+      useWorkflowStore: () => ({ current: { tipos_documento: [] }, getRequisitosForEstado: () => [] }),
+    }))
+    const { default: Panel } = await import('../src/components/WorkflowCanvasTransitionPanel.vue')
+    const edge = makeEdge()
+    const wrapper = mount(Panel, {
+      props: { selectedEdge: edge, gruposOptions: [], editMode: true },
+      global: { stubs: STUBS },
+    })
+    const section = wrapper.find('[data-testid="requisitos-section"]')
+    expect(section.exists()).toBe(true)
+    expect(wrapper.text()).toContain('Sin requisitos documentales')
   })
 })

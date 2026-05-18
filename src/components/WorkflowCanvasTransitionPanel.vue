@@ -49,13 +49,14 @@
         Sin condiciones. La transición sólo verifica grupos.
       </div>
       <div v-else class="wf-panel__list">
+        <!-- TODO drag-to-reorder pendiente (spec §3a). v1 sólo permite reorden vía borrar+recrear. -->
         <div
           v-for="(c, idx) in condiciones"
-          :key="idx"
+          :key="`${c.tipo}-${c.orden}-${idx}`"
           class="wf-panel__row"
           @click="openCondicionDialog(c, idx)"
         >
-          <q-chip dense square :class="`wf-panel__tipo-${c.tipo}`">{{ c.tipo }}</q-chip>
+          <q-chip dense square :class="tipoClass(c.tipo)">{{ c.tipo }}</q-chip>
           <span class="wf-panel__row-text">{{ c.mensaje_error || '(sin mensaje)' }}</span>
           <q-toggle
             :model-value="c.activo"
@@ -70,7 +71,7 @@
       <div class="wf-panel__divider"></div>
 
       <!-- Sección Requisitos -->
-      <div class="wf-panel__section-header">
+      <div class="wf-panel__section-header" data-testid="requisitos-section">
         <span class="wf-panel__field-label">Documentos requeridos al llegar a {{ selectedEdge.data?.destino_nombre }}</span>
         <q-chip dense square size="10px">{{ requisitos.length }}</q-chip>
         <q-btn
@@ -153,6 +154,12 @@ const requisitos = computed(() => {
   if (!destino) return []
   return store.getRequisitosForEstado(destino)
 })
+
+const KNOWN_TIPOS = new Set(['python_path', 'json_logic', 'django_orm'])
+
+function tipoClass(tipo) {
+  return KNOWN_TIPOS.has(tipo) ? `wf-panel__tipo-${tipo}` : 'wf-panel__tipo-unknown'
+}
 
 // ── Dialog state ───────────────────────────────────────────────
 const condDialogOpen = ref(false)
@@ -326,6 +333,7 @@ function onRequisitoSaved() {
 .wf-panel__tipo-python_path { background: #ede1f3 !important; color: #6b3fa0 !important; }
 .wf-panel__tipo-json_logic { background: #fff3e0 !important; color: #a36b00 !important; }
 .wf-panel__tipo-django_orm { background: #e3edf7 !important; color: #2a5a8a !important; }
+.wf-panel__tipo-unknown { background: #eee !important; color: #666 !important; }
 
 :deep(.wf-canvas-page__panel .q-select) {
   margin: 6px 16px 0;
