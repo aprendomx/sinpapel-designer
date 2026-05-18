@@ -1,6 +1,9 @@
-// Sub-proyecto D — LLM Service entry point + error classes.
-// Despacha al adapter según aiSettings.provider.
-// La implementación de generate() viene en Task 5.
+// Sub-proyecto D — LLM Service entry point + error classes + dispatcher.
+
+import { useAiSettingsStore } from '../stores/aiSettings.js'
+import { call as anthropicCall } from './llmAdapters/anthropic.js'
+import { call as openaiCall } from './llmAdapters/openai.js'
+import { buildPrompt } from './llmPrompts/workflowGenerator.js'
 
 export class MissingApiKeyError extends Error {
   constructor(provider) {
@@ -37,4 +40,29 @@ export class ApiResponseError extends Error {
     this.name = 'ApiResponseError'
     this.status = status
   }
+}
+
+const ADAPTERS = {
+  anthropic: anthropicCall,
+  openai: openaiCall,
+}
+
+export async function generate(userDescription, opts = {}) {
+  const store = useAiSettingsStore()
+  if (!store.hasApiKey()) {
+    throw new MissingApiKeyError(store.provider)
+  }
+  const adapter = ADAPTERS[store.provider]
+  if (!adapter) {
+    throw new ApiResponseError(`Provider desconocido: ${store.provider}`)
+  }
+  const { system, userMessage } = buildPrompt(userDescription)
+  const result = await adapter({
+    apiKey: store.currentApiKey(),
+    model: store.model,
+    system,
+    userMessage,
+    signal: opts.signal,
+  })
+  return result.text
 }
