@@ -72,4 +72,26 @@ describe('llmService.generate', () => {
     useAiSettingsStore().setApiKey('anthropic', 'sk-ant')
     await expect(generate('x')).rejects.toThrow('boom')
   })
+
+  it('despacha al adapter OpenCode cuando provider=opencode y pasa opencodeUrl', async () => {
+    const opencodeMock = vi.fn().mockResolvedValue({ text: 'r3' })
+    vi.doMock('../src/services/llmAdapters/anthropic.js', () => ({ call: vi.fn() }))
+    vi.doMock('../src/services/llmAdapters/openai.js', () => ({ call: vi.fn() }))
+    vi.doMock('../src/services/llmAdapters/opencode.js', () => ({ call: opencodeMock }))
+    const { generate } = await import('../src/services/llmService.js')
+    const { useAiSettingsStore } = await import('../src/stores/aiSettings.js')
+    const store = useAiSettingsStore()
+    store.setProvider('opencode')
+    store.setOpencodeUrl('http://localhost:9999')
+
+    const result = await generate('descripcion')
+    expect(result).toBe('r3')
+    expect(opencodeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiKey: '',
+        model: 'anthropic/claude-sonnet-4-6',
+        opencodeUrl: 'http://localhost:9999',
+      }),
+    )
+  })
 })

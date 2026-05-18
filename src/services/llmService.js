@@ -3,6 +3,7 @@
 import { useAiSettingsStore } from '../stores/aiSettings.js'
 import { call as anthropicCall } from './llmAdapters/anthropic.js'
 import { call as openaiCall } from './llmAdapters/openai.js'
+import { call as opencodeCall } from './llmAdapters/opencode.js'
 import { buildPrompt } from './llmPrompts/workflowGenerator.js'
 
 export class MissingApiKeyError extends Error {
@@ -45,6 +46,7 @@ export class ApiResponseError extends Error {
 const ADAPTERS = {
   anthropic: anthropicCall,
   openai: openaiCall,
+  opencode: opencodeCall,
 }
 
 export async function generate(userDescription, opts = {}) {
@@ -63,6 +65,7 @@ export async function generate(userDescription, opts = {}) {
     system,
     userMessage,
     signal: opts.signal,
+    opencodeUrl: store.opencodeUrl,
   })
   return result.text
 }
