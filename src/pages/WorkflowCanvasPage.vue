@@ -93,6 +93,7 @@
         :grupos-options="gruposOptions"
         :edit-mode="editMode"
         @grupos-change="onEdgeGruposChange"
+        @condiciones-change="onCondicionesChange"
         @delete-edge="eliminarEdge"
       />
 
@@ -240,6 +241,7 @@ async function loadFlujo() {
         grupos_ids: t.grupos_permitidos.map((g) => g.id),
         origen_nombre: t.estado_origen.nombre,
         destino_nombre: t.estado_destino.nombre,
+        condiciones: t.condiciones || [],
       },
     }))
 
@@ -365,6 +367,19 @@ function onEdgeGruposChange(newGrupos) {
   isDirty.value = true
 }
 
+function onCondicionesChange(nuevasCondiciones) {
+  if (!selectedEdge.value) return
+  edges.value = edges.value.map((e) => {
+    if (e.id !== selectedEdge.value.id) return e
+    return {
+      ...e,
+      data: { ...e.data, condiciones: nuevasCondiciones },
+    }
+  })
+  selectedEdge.value = edges.value.find((e) => e.id === selectedEdge.value?.id) ?? null
+  isDirty.value = true
+}
+
 function eliminarEdge(edge) {
   edges.value = edges.value.filter(e => e.id !== edge.id)
   selectedEdge.value = null
@@ -383,6 +398,7 @@ async function saveChanges() {
       estado_origen_id: parseInt(e.source),
       estado_destino_id: parseInt(e.target),
       grupos_ids: e.data?.grupos_ids ?? [],
+      condiciones: e.data?.condiciones ?? [],
     }))
 
     // Build positions payload from current nodes
