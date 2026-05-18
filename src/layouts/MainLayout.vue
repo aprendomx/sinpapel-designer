@@ -63,6 +63,16 @@
             <span class="ds-nav-item__caption">Estados, Etapas, Grupos</span>
           </div>
         </router-link>
+
+        <router-link :to="{ name: 'ai-generator' }" class="ds-nav-item" active-class="ds-nav-item--active">
+          <div class="ds-nav-item__icon">
+            <q-icon name="auto_awesome" size="20px" />
+          </div>
+          <div class="ds-nav-item__text">
+            <span class="ds-nav-item__title">Generador IA</span>
+            <span class="ds-nav-item__caption">Crear flujo desde descripción</span>
+          </div>
+        </router-link>
       </div>
 
       <!-- Footer del drawer -->
