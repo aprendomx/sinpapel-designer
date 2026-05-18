@@ -2,7 +2,7 @@
 // Persiste a localStorage. API keys son del usuario (browser-direct).
 
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 const STORAGE_KEY = 'sinpapel-designer/ai-settings'
 
@@ -67,7 +67,10 @@ export const useAiSettingsStore = defineStore('aiSettings', () => {
     return apiKeys.value[provider.value] || ''
   }
 
-  watch([provider, model, apiKeys], persist, { deep: true })
+  // persist() debe llamarse desde cada acción que muta state.
+  // No usamos watch para evitar persistencia silenciosa cuando
+  // consumidores bypassan las actions (e.g. store.provider = 'x'
+  // no resetea model al default del nuevo provider).
 
   return {
     provider, model, apiKeys,
