@@ -54,6 +54,23 @@ describe('anthropic adapter', () => {
       .rejects.toBeInstanceOf(ApiAuthError)
   })
 
+  it('lanza ApiAuthError con status 403 también', async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({ error: { message: 'no access to model' } }),
+    })
+    await expect(call({ apiKey: 'x', model: 'm', system: 's', userMessage: 'u' }))
+      .rejects.toBeInstanceOf(ApiAuthError)
+  })
+
+  it('propaga AbortError sin envolverlo en ApiNetworkError', async () => {
+    const abortErr = new DOMException('aborted', 'AbortError')
+    global.fetch.mockRejectedValue(abortErr)
+    await expect(call({ apiKey: 'x', model: 'm', system: 's', userMessage: 'u' }))
+      .rejects.toBe(abortErr)
+  })
+
   it('lanza ApiRateLimitError con status 429', async () => {
     global.fetch.mockResolvedValue({
       ok: false, status: 429,

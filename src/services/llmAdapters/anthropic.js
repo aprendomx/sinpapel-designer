@@ -31,7 +31,10 @@ export async function call({ apiKey, model, system, userMessage, signal }) {
       }),
     })
   } catch (e) {
-    throw new ApiNetworkError(e.message || 'Network failure')
+    // Cancel del caller debe propagar tal cual para que la UI lo
+    // distinga de un error real de red.
+    if (e?.name === 'AbortError') throw e
+    throw new ApiNetworkError(e.message || 'Falla de red')
   }
 
   if (!response.ok) {
