@@ -321,6 +321,7 @@ function onConnect(params) {
       grupos_ids: [],
       origen_nombre: sourceNode?.label ?? params.source,
       destino_nombre: targetNode?.label ?? params.target,
+      condiciones: [],
     },
   }
 
