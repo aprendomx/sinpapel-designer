@@ -215,6 +215,22 @@ export const useWorkflowStore = defineStore('workflow', () => {
     URL.revokeObjectURL(url)
   }
 
+  async function exportFlujoById(id) {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}${id}`)
+    if (!raw) throw new Error(`Flujo ${id} no encontrado`)
+    const json = JSON.parse(raw)
+    const nombre = json?.flujo?.nombre || 'untitled'
+    const blob = new Blob([JSON.stringify(json, null, 2)], {
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `workflow-${nombre}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function discard() {
     if (snapshot.value) {
       current.value = _clone(snapshot.value)
@@ -624,6 +640,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     // New S27.5 actions
     loadFromFile,
     exportToFile,
+    exportFlujoById,
     discard,
     // S27.6
     deleteFlujo,
