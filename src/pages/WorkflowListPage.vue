@@ -118,6 +118,12 @@
             />
             <q-btn
               flat dense round
+              icon="file_download"
+              :aria-label="`Exportar ${flujo.nombre}`"
+              @click="exportar(flujo)"
+            />
+            <q-btn
+              flat dense round
               icon="delete"
               color="negative"
               :aria-label="`Eliminar ${flujo.nombre}`"
@@ -270,6 +276,23 @@ async function toggleActivo(flujo) {
     $q.notify({ type: 'negative', message: 'Error al actualizar flujo', position: 'top' })
   } finally {
     togglingId.value = null
+  }
+}
+
+async function exportar(flujo) {
+  try {
+    await store.exportFlujoById(flujo.id)
+    $q.notify({
+      type: 'positive',
+      message: `Exportado: workflow-${flujo.nombre}.json`,
+      position: 'top',
+    })
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: e?.message || 'Error al exportar',
+      position: 'top',
+    })
   }
 }
 
