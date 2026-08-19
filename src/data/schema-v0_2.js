@@ -151,6 +151,8 @@ function _serializeTransicion(t) {
     grupos_permitidos: (t.grupos_permitidos || [])
       .map((g) => g.name || g)
       .sort(),
+    // sinpapel 0.8.x: key aditiva del schema v0.2 (JSONs viejos → false)
+    requiere_firma: t.requiere_firma ?? false,
   }
   const condiciones = (t.condiciones || []).map((c) => ({
     tipo: c.tipo,
@@ -241,6 +243,7 @@ function _deserializeTransicion(t, idx, estados, gruposJson) {
     grupos_permitidos: (t.grupos_permitidos || []).map(
       (name) => grupoLookup[name] || { id: 0, name }
     ),
+    requiere_firma: t.requiere_firma ?? false,
     condiciones: (t.condiciones || []).map((c) => ({
       tipo: c.tipo,
       configuracion: c.configuracion ?? {},

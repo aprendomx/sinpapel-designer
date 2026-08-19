@@ -31,6 +31,7 @@ Schema JSON v0.2:
         "estado_origen": "<nombre estado>",
         "estado_destino": "<nombre estado>",
         "grupos_permitidos": ["<grupo.name>"],
+        "requiere_firma": false,
         "condiciones": [
           {
             "tipo": "python_path" | "json_logic" | "django_orm",
@@ -64,6 +65,7 @@ REGLAS OBLIGATORIAS:
 3. \`transiciones[*].estado_origen\` y \`estado_destino\` deben referenciar \`nombres\` que existan en catalogos.estados.
 4. \`transiciones[*].grupos_permitidos[*]\` deben referenciar \`name\` que exista en catalogos.grupos.
 5. \`condiciones[*].tipo\` SÓLO puede ser uno de: python_path, json_logic, django_orm.
+5b. \`transiciones[*].requiere_firma\` (bool, opcional, default false): márcalo true SOLO en decisiones críticas que el usuario describa como firmadas (aprobar, rechazar, autorizar).
 6. \`requisitos[*].tipo_documento\` debe existir en catalogos.tipos_documento.
 7. Si no hay condiciones para una transición, OMITE el campo (no rellenes con []).
 8. Si no estás seguro de una condición, NO la inventes. Es mejor un flujo sin condiciones que con configuraciones bogus.

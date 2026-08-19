@@ -94,6 +94,7 @@
         :edit-mode="editMode"
         @grupos-change="onEdgeGruposChange"
         @condiciones-change="onCondicionesChange"
+        @requiere-firma-change="onRequiereFirmaChange"
         @delete-edge="eliminarEdge"
       />
 
@@ -242,6 +243,7 @@ async function loadFlujo() {
         origen_nombre: t.estado_origen.nombre,
         destino_nombre: t.estado_destino.nombre,
         condiciones: t.condiciones || [],
+        requiere_firma: t.requiere_firma ?? false,
       },
     }))
 
@@ -322,6 +324,7 @@ function onConnect(params) {
       origen_nombre: sourceNode?.label ?? params.source,
       destino_nombre: targetNode?.label ?? params.target,
       condiciones: [],
+      requiere_firma: false,
     },
   }
 
@@ -368,6 +371,19 @@ function onEdgeGruposChange(newGrupos) {
   isDirty.value = true
 }
 
+function onRequiereFirmaChange(value) {
+  if (!selectedEdge.value) return
+  edges.value = edges.value.map((e) => {
+    if (e.id !== selectedEdge.value.id) return e
+    return {
+      ...e,
+      data: { ...e.data, requiere_firma: value },
+    }
+  })
+  selectedEdge.value = edges.value.find((e) => e.id === selectedEdge.value?.id) ?? null
+  isDirty.value = true
+}
+
 function onCondicionesChange(nuevasCondiciones) {
   if (!selectedEdge.value) return
   edges.value = edges.value.map((e) => {
@@ -400,6 +416,7 @@ async function saveChanges() {
       estado_destino_id: parseInt(e.target),
       grupos_ids: e.data?.grupos_ids ?? [],
       condiciones: e.data?.condiciones ?? [],
+      requiere_firma: e.data?.requiere_firma ?? false,
     }))
 
     // Build positions payload from current nodes

@@ -33,6 +33,25 @@
 
       <div class="wf-panel__divider"></div>
 
+      <!-- Firma electrónica (sinpapel 0.8.x: ConfiguracionTransicion.requiere_firma) -->
+      <div class="wf-panel__section-header" data-testid="firma-section">
+        <span class="wf-panel__field-label">Firma electrónica</span>
+        <q-toggle
+          :model-value="requiereFirma"
+          size="sm"
+          data-testid="requiere-firma-toggle"
+          aria-label="Requiere firma electrónica"
+          @update:model-value="$emit('requiere-firma-change', $event)"
+        />
+      </div>
+      <p class="wf-panel__field-hint">
+        {{ requiereFirma
+          ? 'El motor exigirá firma_payload para ejecutar esta transición.'
+          : 'La transición no exige firma electrónica.' }}
+      </p>
+
+      <div class="wf-panel__divider"></div>
+
       <!-- Sección Condiciones -->
       <div class="wf-panel__section-header" data-testid="condiciones-section">
         <span class="wf-panel__field-label">Condiciones</span>
@@ -138,6 +157,7 @@ const emit = defineEmits([
   'grupos-change',
   'delete-edge',
   'condiciones-change',
+  'requiere-firma-change',
 ])
 
 const store = useWorkflowStore()
@@ -148,6 +168,10 @@ const localGrupos = computed({
 })
 
 const condiciones = computed(() => props.selectedEdge?.data?.condiciones ?? [])
+
+const requiereFirma = computed(
+  () => props.selectedEdge?.data?.requiere_firma ?? false,
+)
 
 const requisitos = computed(() => {
   const destino = props.selectedEdge?.data?.destino_nombre

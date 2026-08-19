@@ -98,12 +98,14 @@
         "grupos_permitidos": [
           "RT_Administradores",
           "RT_ComiteCredito"
-        ]
+        ],
+        "requiere_firma": false
       },
       {
         "estado_destino": "RT_APROBADO",
         "estado_origen": "RT_REVISION",
-        "grupos_permitidos": []
+        "grupos_permitidos": [],
+        "requiere_firma": false
       }
     ]
   },
